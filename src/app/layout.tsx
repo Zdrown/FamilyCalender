@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { AutoRefresh } from '@/components/providers/AutoRefresh';
+import { VirtualKeyboardProvider } from '@/components/ui/VirtualKeyboard';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -32,7 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="bg-bg-primary text-text-primary font-body antialiased">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <VirtualKeyboardProvider>{children}</VirtualKeyboardProvider>
+        </QueryProvider>
         <AutoRefresh />
         <ServiceWorkerRegistrar />
       </body>

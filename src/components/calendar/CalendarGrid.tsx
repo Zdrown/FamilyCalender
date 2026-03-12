@@ -11,9 +11,10 @@ interface CalendarGridProps {
   events: CalendarEvent[];
   users: User[];
   onEventClick?: (event: CalendarEvent) => void;
+  onEventDelete?: (eventId: string) => void;
 }
 
-export function CalendarGrid({ events, users, onEventClick }: CalendarGridProps) {
+export function CalendarGrid({ events, users, onEventClick, onEventDelete }: CalendarGridProps) {
   const { selectedDate, viewMode, visibleUserIds } = useAppStore();
 
   const days = useMemo(() => {
@@ -76,6 +77,7 @@ export function CalendarGrid({ events, users, onEventClick }: CalendarGridProps)
                     users={users}
                     compact={viewMode === 'month'}
                     onClick={() => onEventClick?.(event)}
+                    onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
                   />
                 ))}
                 {dayEvents.length > (viewMode === 'month' ? 3 : 8) && (

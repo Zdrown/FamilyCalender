@@ -41,7 +41,7 @@ export default function HomePage() {
     return { start: startOfWeek(selectedDate), end: endOfWeek(selectedDate) };
   }, [selectedDate, viewMode]);
 
-  const { data: rawEvents = [], addEvent } = useEvents(dateRange.start, dateRange.end);
+  const { data: rawEvents = [], addEvent, deleteEvent } = useEvents(dateRange.start, dateRange.end);
   const events = useMemo(() => expandRecurringEvents(rawEvents, dateRange.start, dateRange.end), [rawEvents, dateRange]);
 
   const [showEventForm, setShowEventForm] = useState(false);
@@ -122,7 +122,7 @@ export default function HomePage() {
                   <AffirmationHero />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <CalendarGrid events={events} users={users} />
+                  <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} />
                 </div>
               </>
             )}
@@ -155,7 +155,7 @@ export default function HomePage() {
               </h3>
               <div className="space-y-2">
                 {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">No events today</p>}
-                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} compact />)}
+                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} compact onDelete={() => deleteEvent.mutate(event.id)} />)}
               </div>
             </div>
             <div className="p-5 border-t border-border">
@@ -203,12 +203,12 @@ export default function HomePage() {
           <motion.div key="family" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
           <>
             <FilterBar users={users} />
-            <CalendarGrid events={events} users={users} />
+            <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} />
             <div className="px-5 py-4">
               <h3 className="font-display text-lg font-semibold text-text-primary mb-3">Today</h3>
               <div className="space-y-2">
                 {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">Nothing scheduled today</p>}
-                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} />)}
+                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} onDelete={() => deleteEvent.mutate(event.id)} />)}
               </div>
             </div>
           </>

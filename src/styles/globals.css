@@ -65,6 +65,74 @@ button, a, [role="button"] {
   }
 }
 
+/* ── Virtual Keyboard Theme ─────────────────────────────────────────── */
+
+.vk-theme.hg-theme-default {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-body);
+}
+
+.vk-theme .hg-row {
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.vk-theme .hg-button {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06), 0 1px 0 rgba(0,0,0,0.04);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 500;
+  height: 56px;
+  transition: background 0.1s, box-shadow 0.1s, transform 0.08s;
+}
+
+.vk-theme .hg-button:active,
+.vk-theme .hg-button-pressed {
+  background: var(--color-accent-primary);
+  color: #fff;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+  transform: scale(0.96);
+}
+
+.vk-theme .hg-button.hg-functionBtn {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.vk-theme .hg-button.hg-functionBtn:active {
+  background: var(--color-accent-tertiary);
+  color: #fff;
+}
+
+.vk-theme .hg-button[data-skbtn="{space}"] {
+  min-width: 40%;
+  border-radius: 14px;
+}
+
+.vk-theme .hg-button[data-skbtn="{enter}"] {
+  background: var(--color-accent-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.vk-theme .hg-button[data-skbtn="{enter}"]:active {
+  background: var(--color-accent-primary);
+  filter: brightness(0.9);
+}
+
+.vk-theme .hg-button[data-skbtn="{bksp}"] {
+  font-size: 1.3rem;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
   width: 6px;
 }
