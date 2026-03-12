@@ -217,7 +217,7 @@ export default function HomePage() {
           <>
             <FilterBar users={users} />
                   <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} onEventEdit={handleEditEvent} />
-            <div className="px-4 py-3 md:px-5 md:py-4">
+            <div className="hidden md:block px-4 py-3 md:px-5 md:py-4">
               <h3 className="font-display text-lg font-semibold text-text-primary mb-3">Today</h3>
               <div className="space-y-2">
                 {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">Nothing scheduled today</p>}
