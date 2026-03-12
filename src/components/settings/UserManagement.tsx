@@ -18,16 +18,17 @@ interface UserFormData {
   phone_number: string;
   carrier: string;
   avatar_color: string;
+  ical_url: string;
 }
 
 export function UserManagement() {
   const { data: users = [], addUser, updateUser, deleteUser } = useUsers();
   const [editing, setEditing] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState<UserFormData>({ name: '', phone_number: '', carrier: '', avatar_color: AVATAR_COLORS[0] });
+  const [form, setForm] = useState<UserFormData>({ name: '', phone_number: '', carrier: '', avatar_color: AVATAR_COLORS[0], ical_url: '' });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const resetForm = () => { setForm({ name: '', phone_number: '', carrier: '', avatar_color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)] }); };
+  const resetForm = () => { setForm({ name: '', phone_number: '', carrier: '', avatar_color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)], ical_url: '' }); };
 
   const handleAdd = () => {
     if (!form.name.trim()) return;
@@ -44,7 +45,7 @@ export function UserManagement() {
 
   const handleEdit = (user: User) => {
     setEditing(user.id);
-    setForm({ name: user.name, phone_number: user.phone_number || '', carrier: user.carrier || '', avatar_color: user.avatar_color });
+    setForm({ name: user.name, phone_number: user.phone_number || '', carrier: user.carrier || '', avatar_color: user.avatar_color, ical_url: user.ical_url || '' });
   };
 
   const handleSave = (id: string) => {
@@ -54,6 +55,7 @@ export function UserManagement() {
       phone_number: form.phone_number || null,
       carrier: form.carrier || null,
       avatar_color: form.avatar_color,
+      ical_url: form.ical_url || null,
     });
     setEditing(null);
     resetForm();
@@ -188,8 +190,15 @@ function UserFormFields({ form, setForm }: { form: UserFormData; setForm: (f: Us
           <option value="tmobile">T-Mobile</option>
           <option value="sprint">Sprint</option>
         </select>
-      </div>
-      {/* Color picker */}
+     </div>
+     <input
+       type="url"
+       placeholder="Google Calendar iCal URL (optional)"
+       value={form.ical_url}
+       onChange={(e) => setForm({ ...form, ical_url: e.target.value })}
+       className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border font-body text-sm text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-accent-primary/30"
+     />
+     {/* Color picker */}
       <div>
         <p className="font-body text-xs text-text-muted mb-2">Avatar color</p>
         <div className="flex flex-wrap gap-2">

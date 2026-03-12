@@ -17,6 +17,7 @@ export interface User {
   avatar_color: string;
   accent_color: string | null;
   hero_image_url: string | null;
+  ical_url: string | null;
   personal_affirmation: string | null;
   sort_order: number;
   created_at: string;

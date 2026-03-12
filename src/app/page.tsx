@@ -26,6 +26,9 @@ import { PhotoCarousel } from '@/components/photos/PhotoCarousel';
 import { PhotoUpload } from '@/components/photos/PhotoUpload';
 import { UserManagement } from '@/components/settings/UserManagement';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { Screensaver } from '@/components/ui/Screensaver';
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
+import { hapticSuccess } from '@/lib/utils/haptic';
 
 export default function HomePage() {
   const { data: users = [], updateUser } = useUsers();
@@ -93,10 +96,20 @@ export default function HomePage() {
     </AnimatePresence>
   );
 
+  // Page transition variants
+  const pageVariants = {
+    initial: { opacity: 0, x: 20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 },
+  };
+  const pageTransition = { duration: 0.2, ease: 'easeOut' as const };
+
   // ─── Wall Display ───
   if (isWallDisplay) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-bg-primary">
+        <OfflineIndicator />
+        <Screensaver />
         <WallTabBar users={users} onAddUser={() => setShowSettings(true)} onSettings={() => setShowSettings(true)} />
         {isFamilyTab && <FilterBar users={users} />}
 
@@ -170,6 +183,8 @@ export default function HomePage() {
   // ─── Mobile / Desktop ───
   return (
     <div className="min-h-screen flex flex-col bg-bg-primary pb-20">
+      <OfflineIndicator />
+      <Screensaver />
       <header className="flex items-center justify-between px-5 py-4 bg-bg-card border-b border-border">
         <h1 className="font-display text-2xl font-bold text-text-primary tracking-tight">MyFamily</h1>
         <div className="flex items-center gap-2">
@@ -182,8 +197,10 @@ export default function HomePage() {
 
       {/* Mobile content based on active tab */}
       <div className="flex-1 overflow-y-auto">
+        <AnimatePresence mode="wait">
         {/* Calendar tab */}
         {isFamilyTab && (
+          <motion.div key="family" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
           <>
             <FilterBar users={users} />
             <CalendarGrid events={events} users={users} />
@@ -195,33 +212,39 @@ export default function HomePage() {
               </div>
             </div>
           </>
+          </motion.div>
         )}
 
         {/* Todos tab */}
         {isTodosTab && (
-          <div className="p-5 space-y-6">
+          <motion.div key="todos" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-5 space-y-6">
             <TodoList />
             <ChoreBoard />
-          </div>
+          </motion.div>
         )}
 
         {/* Grocery tab */}
         {isGroceryTab && (
-          <div className="p-5">
+          <motion.div key="grocery" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-5">
             <GroceryList />
-          </div>
+          </motion.div>
         )}
 
         {/* Photos tab */}
         {isPhotosTab && (
-          <div className="p-5 space-y-4">
+          <motion.div key="photos" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-5 space-y-4">
             <PhotoCarousel scope="family" />
             <PhotoUpload scope="family" />
-          </div>
+          </motion.div>
         )}
 
         {/* Me tab — user picker then personal view */}
-        {isMeTab && <MeTab users={users} onUpdateUser={updateUser} />}
+        {isMeTab && (
+          <motion.div key="me" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
+            <MeTab users={users} onUpdateUser={updateUser} />
+          </motion.div>
+        )}
+        </AnimatePresence>
       </div>
 
       {/* FAB for calendar */}
