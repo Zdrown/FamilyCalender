@@ -15,7 +15,7 @@ import { WallTabBar, MobileTabBar } from '@/components/ui/TabBar';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { AffirmationHero } from '@/components/ui/AffirmationHero';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
-import { EventCard } from '@/components/calendar/EventCard';
+// EventCard removed — now rendered inside CalendarGrid
 import { EventForm } from '@/components/calendar/EventForm';
 import { TodoList } from '@/components/todos/TodoList';
 import { ChoreBoard } from '@/components/chores/ChoreBoard';
@@ -26,6 +26,7 @@ import { PhotoCarousel } from '@/components/photos/PhotoCarousel';
 import { PhotoUpload } from '@/components/photos/PhotoUpload';
 import { UserManagement } from '@/components/settings/UserManagement';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
+import { ScreensaverSettings } from '@/components/settings/ScreensaverSettings';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Screensaver } from '@/components/ui/Screensaver';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
@@ -58,12 +59,6 @@ export default function HomePage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsWallDisplay]);
-
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const todayEvents = useMemo(
-    () => events.filter((e) => e.date === todayStr).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')),
-    [events, todayStr]
-  );
 
   if (!isClient) return null;
 
@@ -136,6 +131,7 @@ export default function HomePage() {
             </div>
             <UserManagement />
             <NotificationSettings />
+            <ScreensaverSettings />
           </motion.div>
         </motion.div>
       )}
