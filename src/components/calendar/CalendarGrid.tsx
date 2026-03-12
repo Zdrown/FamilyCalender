@@ -44,7 +44,7 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
     [filteredEvents, expandedDayStr]
   );
 
-  // Today's events for the desktop "Today" section
+  // Today's events
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayEvents = useMemo(
     () => filteredEvents.filter((e) => e.date === todayStr).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')),
@@ -68,14 +68,44 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
   // Find which row contains the expanded date
   const expandedRowIndex = rows.findIndex(row => row.some(d => isSameDay(d, expandedDate)));
 
-  // Get label for expanded day - always "Today" if it IS today
+  // Get label for expanded day
   const getExpandedDayLabel = () => {
     if (isToday(expandedDate)) return 'Today';
     return format(expandedDate, 'EEEE, MMMM d');
   };
 
+  // Helper: get event color
+  const getEventColor = (event: CalendarEvent) =>
+    event.color || users.find(u => event.event_users?.some(eu => eu.user_id === u.id))?.avatar_color || 'var(--color-accent-primary)';
+
+  // Unified Today section (renders at all breakpoints)
+  const todaySection = (
+    <div className="bg-bg-card flex-shrink-0">
+      <div className="px-4 md:px-6 pt-5 pb-2">
+        <h3 className="font-display text-lg lg:text-xl xl:text-2xl font-bold text-text-primary">
+          Today
+        </h3>
+      </div>
+      <div className="px-3 md:px-5 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
+        {todayEvents.length === 0 && (
+          <p className="text-text-muted font-body text-sm italic py-4 text-center col-span-full">No events today</p>
+        )}
+        {todayEvents.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            users={users}
+            onClick={() => onEventClick?.(event)}
+            onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
+            onEdit={onEventEdit}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-bg-card">
       {/* ─── Mobile: Scrollable weekday (Mon-Fri) view ─── */}
       <div className="md:hidden flex flex-col">
         {/* Weekday headers */}
@@ -87,7 +117,7 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
           ))}
         </div>
 
-        {/* Weekday cells - taller for mobile */}
+        {/* Weekday cells */}
         <div className="grid grid-cols-5 gap-px bg-border">
           {weekdays.slice(0, 5).map((day) => {
             const dayStr = format(day, 'yyyy-MM-dd');
@@ -116,12 +146,11 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
                     {format(day, 'd')}
                   </div>
 
-                  {/* Dots for events */}
+                  {/* Colored dots for events */}
                   <div className="flex flex-wrap justify-center gap-0.5 mt-1">
-                    {dayEvents.slice(0, 4).map((event) => {
-                      const color = event.color || users.find(u => event.event_users?.some(eu => eu.user_id === u.id))?.avatar_color || 'var(--color-accent-primary)';
-                      return <div key={event.id} className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />;
-                    })}
+                    {dayEvents.slice(0, 4).map((event) => (
+                      <div key={event.id} className="w-2 h-2 rounded-full" style={{ backgroundColor: getEventColor(event) }} />
+                    ))}
                     {dayEvents.length > 4 && <div className="w-2 h-2 rounded-full bg-text-muted" />}
                   </div>
                 </div>
@@ -130,38 +159,43 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
           })}
         </div>
 
-        {/* Mobile expanded day events */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={expandedDayStr}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="bg-bg-card border-t border-border"
-          >
-            <div className="px-4 pt-3 pb-1">
-              <h3 className="font-display text-sm font-semibold text-text-primary">
-                {getExpandedDayLabel()}
-              </h3>
-            </div>
-            <div className="px-3 pb-3 space-y-2">
-              {expandedDayEvents.length === 0 && (
-                <p className="text-text-muted font-body text-sm italic py-3 text-center">No events</p>
-              )}
-              {expandedDayEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  users={users}
-                  onClick={() => onEventClick?.(event)}
-                  onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
-                  onEdit={onEventEdit}
-                />
-              ))}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+        {/* Mobile expanded day events (only if NOT today, to avoid duplication) */}
+        {!isToday(expandedDate) && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={expandedDayStr}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="bg-bg-card border-t border-border"
+            >
+              <div className="px-4 pt-3 pb-1">
+                <h3 className="font-display text-sm font-semibold text-text-primary">
+                  {getExpandedDayLabel()}
+                </h3>
+              </div>
+              <div className="px-3 pb-3 space-y-2">
+                {expandedDayEvents.length === 0 && (
+                  <p className="text-text-muted font-body text-sm italic py-3 text-center">No events</p>
+                )}
+                {expandedDayEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    users={users}
+                    onClick={() => onEventClick?.(event)}
+                    onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
+                    onEdit={onEventEdit}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {/* Unified Today section — mobile */}
+        {todaySection}
       </div>
 
       {/* ─── Desktop / Tablet: Full 7-day grid ─── */}
@@ -237,8 +271,8 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
                 })}
               </div>
 
-              {/* Expanded event panel — appears below the row containing the selected day (week view only) */}
-              {viewMode === 'week' && (
+              {/* Expanded event panel — appears below the row containing the selected day (week view, non-today only) */}
+              {viewMode === 'week' && !isToday(expandedDate) && (
                 <AnimatePresence mode="wait">
                   {expandedRowIndex === rowIndex && (
                     <motion.div
@@ -277,30 +311,8 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
           ))}
         </div>
 
-        {/* Below-calendar: Selected day events (scrollable) */}
-        <div className="border-t-2 border-accent-primary/30 bg-accent-primary/5 flex-shrink-0 overflow-y-auto max-h-[40vh]" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="px-4 md:px-6 pt-4 pb-1 sticky top-0 bg-accent-primary/5 backdrop-blur-sm z-10">
-            <h3 className="font-display text-base md:text-lg font-semibold text-accent-primary flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-accent-primary animate-pulse" />
-              {getExpandedDayLabel()}
-            </h3>
-          </div>
-          <div className="px-3 md:px-5 pb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
-            {expandedDayEvents.length === 0 && (
-              <p className="text-text-muted font-body text-sm italic py-4 text-center col-span-full">No events</p>
-            )}
-            {expandedDayEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                users={users}
-                onClick={() => onEventClick?.(event)}
-                onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
-                onEdit={onEventEdit}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Unified Today section — desktop/tablet */}
+        {todaySection}
       </div>
     </div>
   );
