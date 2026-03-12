@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, ChevronUp, ChevronDown, Users } from 'lucide-react';
+import { X, ChevronUp, ChevronDown, Users, Calendar } from 'lucide-react';
 import type { CalendarEvent, User } from '@/types';
 import { format } from 'date-fns';
 
@@ -199,13 +199,19 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
             autoFocus
           />
 
-          {/* Date */}
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-          />
+          {/* Date (MM/DD/YYYY) */}
+          <div className="relative">
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+            />
+            <div className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body flex items-center justify-between pointer-events-none">
+              <span>{date ? format(new Date(date + 'T00:00:00'), 'MM/dd/yyyy') : 'Select date'}</span>
+              <Calendar size={18} className="text-text-muted" />
+            </div>
+          </div>
 
           {/* All day toggle */}
           <label className="flex items-center gap-3 cursor-pointer">
