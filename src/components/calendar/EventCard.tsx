@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { formatTime } from '@/lib/utils/dates';
 import type { CalendarEvent, User } from '@/types';
 
@@ -11,11 +11,10 @@ interface EventCardProps {
   users: User[];
   compact?: boolean;
   onClick?: () => void;
-  onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: EventCardProps) {
+export function EventCard({ event, users, compact, onClick, onDelete }: EventCardProps) {
   const assignedUserIds = event.event_users?.map((eu) => eu.user_id) ?? [];
   const assignedUsers = users.filter((u) => assignedUserIds.includes(u.id));
   const eventColor = event.color || assignedUsers[0]?.avatar_color || 'var(--color-accent-primary)';
@@ -29,7 +28,6 @@ export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: 
     longPressTimer.current = setTimeout(() => {
       didLongPress.current = true;
       setShowActions(true);
-      // haptic feedback if available
       if (navigator.vibrate) navigator.vibrate(30);
     }, 500);
   }, []);
@@ -52,7 +50,7 @@ export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: 
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative group">
       <motion.div
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
@@ -62,7 +60,6 @@ export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: 
           w-full text-left rounded-xl transition-all cursor-pointer select-none
           ${compact ? 'px-3 py-2' : 'px-4 py-3'}
           bg-bg-card border border-border hover:shadow-md
-          ${showActions ? 'ring-2 ring-accent-primary/40' : ''}
         `}
         style={{ borderLeftWidth: 4, borderLeftColor: eventColor }}
       >
@@ -87,6 +84,17 @@ export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: 
           {event.all_day && (
             <span className="text-xs text-text-muted font-body">All Day</span>
           )}
+
+          {/* Delete button - always visible on non-compact, hover on compact */}
+          {onDelete && (
+            <motion.button
+              whileTap={{ scale: 0.8 }}
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className={`ml-auto text-text-muted hover:text-error transition-colors shrink-0 ${compact ? 'opacity-0 group-hover:opacity-100' : ''}`}
+            >
+              <Trash2 size={compact ? 12 : 14} />
+            </motion.button>
+          )}
         </div>
 
         <p className={`font-body font-medium text-text-primary mt-1 ${compact ? 'text-sm' : 'text-base wall:text-xl'}`}>
@@ -100,11 +108,10 @@ export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: 
         )}
       </motion.div>
 
-      {/* Long-press action bar */}
+      {/* Long-press expanded actions (bonus) */}
       <AnimatePresence>
         {showActions && (
           <>
-            {/* Backdrop to dismiss */}
             <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
             <motion.div
               initial={{ opacity: 0, y: -4, scale: 0.95 }}
@@ -113,15 +120,6 @@ export function EventCard({ event, users, compact, onClick, onEdit, onDelete }: 
               transition={{ duration: 0.15 }}
               className="absolute right-2 top-full mt-1 z-50 flex gap-1 bg-bg-card rounded-xl border border-border shadow-xl p-1.5"
             >
-              {onEdit && (
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={() => { setShowActions(false); onEdit(); }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-text-secondary hover:bg-bg-secondary transition-colors"
-                >
-                  <Pencil size={14} /> Edit
-                </motion.button>
-              )}
               {onDelete && (
                 <motion.button
                   whileTap={{ scale: 0.85 }}
