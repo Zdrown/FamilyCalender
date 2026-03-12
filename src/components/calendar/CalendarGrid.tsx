@@ -79,7 +79,7 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
         className="flex-1 overflow-y-auto px-3 md:px-5 pb-6"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
           {selectedDayEvents.length === 0 && (
             <p className="text-text-muted font-body text-sm italic py-4 text-center col-span-full">No events</p>
           )}
@@ -178,7 +178,7 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
         </div>
 
         {/* Day cells */}
-        <div className="flex-1 flex flex-col bg-border gap-px overflow-hidden">
+        <div className="flex-1 flex flex-col bg-border gap-px">
           {rows.map((row, rowIndex) => (
             <div key={rowIndex} className="grid grid-cols-7 gap-px flex-1">
               {row.map((day) => {

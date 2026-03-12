@@ -123,7 +123,7 @@ export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: 
         whileTap={{ scale: 0.98 }}
         className={`
           w-full text-left rounded-lg md:rounded-xl transition-all cursor-pointer select-none
-          ${compact ? 'hidden md:block px-3 py-2' : 'px-3 py-2.5 md:px-4 md:py-3'}
+          ${compact ? 'hidden md:block px-3 py-2' : 'px-3 py-2.5 md:px-4 md:py-3 lg:px-5 lg:py-4'}
           bg-bg-card border border-border hover:shadow-md
         `}
         style={{ borderLeftWidth: 4, borderLeftColor: eventColor }}
