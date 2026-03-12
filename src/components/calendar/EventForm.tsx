@@ -1,35 +1,147 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
-import type { User } from '@/types';
+import { X, ChevronUp, ChevronDown, Users } from 'lucide-react';
+import type { CalendarEvent, User } from '@/types';
 import { format } from 'date-fns';
+
+interface EventFormData {
+  title: string;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  all_day: boolean;
+  recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+  userIds: string[];
+  isFamily: boolean;
+}
 
 interface EventFormProps {
   users: User[];
-  onSubmit: (data: {
-    title: string;
-    date: string;
-    start_time: string | null;
-    end_time: string | null;
-    all_day: boolean;
-    recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
-    userIds: string[];
-  }) => void;
+  onSubmit: (data: EventFormData) => void;
   onClose: () => void;
   initialDate?: Date;
+  editEvent?: CalendarEvent;
 }
 
-export function EventForm({ users, onSubmit, onClose, initialDate }: EventFormProps) {
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState(format(initialDate || new Date(), 'yyyy-MM-dd'));
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [allDay, setAllDay] = useState(false);
+// ─── Custom Time Picker ───
+function TimePicker({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  // Parse 24h time string to 12h components
+  const parse12h = (time: string) => {
+    if (!time) return { hour: 12, minute: 0, period: 'AM' as const };
+    const [h, m] = time.split(':').map(Number);
+    const period = h >= 12 ? 'PM' as const : 'AM' as const;
+    const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return { hour, minute: m, period };
+  };
+
+  const { hour, minute, period } = parse12h(value);
+
+  const to24h = (h: number, m: number, p: 'AM' | 'PM') => {
+    let h24 = h;
+    if (p === 'AM' && h === 12) h24 = 0;
+    else if (p === 'PM' && h !== 12) h24 = h + 12;
+    return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  const setHour = (h: number) => onChange(to24h(h, minute, period));
+  const setMinute = (m: number) => onChange(to24h(hour, m, period));
+  const togglePeriod = () => onChange(to24h(hour, minute, period === 'AM' ? 'PM' : 'AM'));
+
+  const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-body text-text-muted">{label}</label>
+      <div className="bg-bg-secondary rounded-xl border border-border p-3 space-y-3">
+        {/* AM/PM toggle */}
+        <div className="flex justify-center gap-1">
+          <button
+            type="button"
+            onClick={() => period !== 'AM' && togglePeriod()}
+            className={`px-5 py-2 rounded-lg font-body text-sm font-bold transition-all ${period === 'AM' ? 'bg-accent-primary text-white shadow-sm' : 'bg-bg-primary text-text-muted'}`}
+          >
+            AM
+          </button>
+          <button
+            type="button"
+            onClick={() => period !== 'PM' && togglePeriod()}
+            className={`px-5 py-2 rounded-lg font-body text-sm font-bold transition-all ${period === 'PM' ? 'bg-accent-primary text-white shadow-sm' : 'bg-bg-primary text-text-muted'}`}
+          >
+            PM
+          </button>
+        </div>
+
+        {/* Hour selection */}
+        <div>
+          <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1.5">Hour</p>
+          <div className="grid grid-cols-6 gap-1">
+            {HOURS.map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => setHour(h)}
+                className={`py-2 rounded-lg font-mono text-sm font-semibold transition-all ${hour === h ? 'bg-accent-primary text-white shadow-sm' : 'bg-bg-primary text-text-secondary hover:bg-bg-card'}`}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Minute selection */}
+        <div>
+          <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1.5">Minute</p>
+          <div className="grid grid-cols-6 gap-1">
+            {MINUTES.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMinute(m)}
+                className={`py-2 rounded-lg font-mono text-sm font-semibold transition-all ${minute === m ? 'bg-accent-primary text-white shadow-sm' : 'bg-bg-primary text-text-secondary hover:bg-bg-card'}`}
+              >
+                {String(m).padStart(2, '0')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Current selection display */}
+        <div className="text-center py-1">
+          <span className="font-mono text-lg font-bold text-text-primary">
+            {hour}:{String(minute).padStart(2, '0')} {period}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: EventFormProps) {
+  const isEdit = !!editEvent;
+  const [title, setTitle] = useState(editEvent?.title || '');
+  const [date, setDate] = useState(editEvent?.date || format(initialDate || new Date(), 'yyyy-MM-dd'));
+  const [startTime, setStartTime] = useState(editEvent?.start_time || '09:00');
+  const [endTime, setEndTime] = useState(editEvent?.end_time || '10:00');
+  const [allDay, setAllDay] = useState(editEvent?.all_day ?? false);
   type Recurrence = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
-  const [recurrence, setRecurrence] = useState<Recurrence>('none');
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [recurrence, setRecurrence] = useState<Recurrence>(editEvent?.recurrence || 'none');
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    editEvent?.event_users?.map((eu) => eu.user_id) || []
+  );
+  const [isFamily, setIsFamily] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  const formatDisplay = (time: string) => {
+    if (!time) return 'Set time';
+    const [h, m] = time.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +153,8 @@ export function EventForm({ users, onSubmit, onClose, initialDate }: EventFormPr
       end_time: allDay ? null : endTime || null,
       all_day: allDay,
       recurrence,
-      userIds: selectedUserIds,
+      userIds: isFamily ? users.map((u) => u.id) : selectedUserIds,
+      isFamily,
     });
   };
 
@@ -67,7 +180,9 @@ export function EventForm({ users, onSubmit, onClose, initialDate }: EventFormPr
         className="bg-bg-card w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-display text-2xl font-semibold text-text-primary">New Event</h2>
+          <h2 className="font-display text-2xl font-semibold text-text-primary">
+            {isEdit ? 'Edit Event' : 'New Event'}
+          </h2>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-bg-secondary text-text-muted">
             <X size={24} />
           </button>
@@ -103,26 +218,43 @@ export function EventForm({ users, onSubmit, onClose, initialDate }: EventFormPr
             <span className="font-body text-text-secondary">All day</span>
           </label>
 
-          {/* Time fields */}
+          {/* Time fields - custom AM/PM picker */}
           {!allDay && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
+              {/* Start time */}
               <div>
-                <label className="block text-xs font-body text-text-muted mb-1">Start</label>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-                />
+                <button
+                  type="button"
+                  onClick={() => { setShowStartPicker(!showStartPicker); setShowEndPicker(false); }}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body"
+                >
+                  <span className="text-xs text-text-muted">Start</span>
+                  <span className="font-mono font-semibold">{formatDisplay(startTime)}</span>
+                  {showStartPicker ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+                {showStartPicker && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-2">
+                    <TimePicker value={startTime} onChange={setStartTime} label="" />
+                  </motion.div>
+                )}
               </div>
+
+              {/* End time */}
               <div>
-                <label className="block text-xs font-body text-text-muted mb-1">End</label>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-                />
+                <button
+                  type="button"
+                  onClick={() => { setShowEndPicker(!showEndPicker); setShowStartPicker(false); }}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body"
+                >
+                  <span className="text-xs text-text-muted">End</span>
+                  <span className="font-mono font-semibold">{formatDisplay(endTime)}</span>
+                  {showEndPicker ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+                {showEndPicker && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-2">
+                    <TimePicker value={endTime} onChange={setEndTime} label="" />
+                  </motion.div>
+                )}
               </div>
             </div>
           )}
@@ -141,29 +273,51 @@ export function EventForm({ users, onSubmit, onClose, initialDate }: EventFormPr
             <option value="yearly">Yearly</option>
           </select>
 
-          {/* Assign to users */}
+          {/* Family tag */}
           <div>
-            <label className="block text-xs font-body text-text-muted mb-2">Assign to</label>
+            <label className="block text-xs font-body text-text-muted mb-2">Tags</label>
             <div className="flex flex-wrap gap-2">
-              {users.map((user) => (
-                <motion.button
-                  key={user.id}
-                  type="button"
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => toggleUser(user.id)}
-                  className={`
-                    px-4 py-2 rounded-full font-body text-sm font-medium transition-all min-h-[44px]
-                    ${selectedUserIds.includes(user.id)
-                      ? 'text-white shadow-sm'
-                      : 'bg-bg-secondary text-text-secondary'}
-                  `}
-                  style={selectedUserIds.includes(user.id) ? { backgroundColor: user.avatar_color } : {}}
-                >
-                  {user.name}
-                </motion.button>
-              ))}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsFamily(!isFamily)}
+                className={`
+                  flex items-center gap-1.5 px-4 py-2 rounded-full font-body text-sm font-medium transition-all min-h-[44px]
+                  ${isFamily
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm'
+                    : 'bg-bg-secondary text-text-secondary'}
+                `}
+              >
+                <Users size={14} /> Family
+              </motion.button>
             </div>
           </div>
+
+          {/* Assign to users */}
+          {!isFamily && (
+            <div>
+              <label className="block text-xs font-body text-text-muted mb-2">Assign to</label>
+              <div className="flex flex-wrap gap-2">
+                {users.map((user) => (
+                  <motion.button
+                    key={user.id}
+                    type="button"
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => toggleUser(user.id)}
+                    className={`
+                      px-4 py-2 rounded-full font-body text-sm font-medium transition-all min-h-[44px]
+                      ${selectedUserIds.includes(user.id)
+                        ? 'text-white shadow-sm'
+                        : 'bg-bg-secondary text-text-secondary'}
+                    `}
+                    style={selectedUserIds.includes(user.id) ? { backgroundColor: user.avatar_color } : {}}
+                  >
+                    {user.name}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <motion.button
@@ -171,7 +325,7 @@ export function EventForm({ users, onSubmit, onClose, initialDate }: EventFormPr
             type="submit"
             className="w-full py-4 rounded-2xl bg-accent-primary text-white font-body font-semibold text-lg shadow-lg hover:shadow-xl transition-all min-h-[56px]"
           >
-            Create Event
+            {isEdit ? 'Save Changes' : 'Create Event'}
           </motion.button>
         </form>
       </motion.div>

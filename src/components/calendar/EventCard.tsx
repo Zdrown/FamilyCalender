@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { formatTime } from '@/lib/utils/dates';
 import type { CalendarEvent, User } from '@/types';
 
@@ -12,9 +12,10 @@ interface EventCardProps {
   compact?: boolean;
   onClick?: () => void;
   onDelete?: () => void;
+  onEdit?: (event: CalendarEvent) => void;
 }
 
-export function EventCard({ event, users, compact, onClick, onDelete }: EventCardProps) {
+export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: EventCardProps) {
   const assignedUserIds = event.event_users?.map((eu) => eu.user_id) ?? [];
   const assignedUsers = users.filter((u) => assignedUserIds.includes(u.id));
   const eventColor = event.color || assignedUsers[0]?.avatar_color || 'var(--color-accent-primary)';
@@ -84,17 +85,6 @@ export function EventCard({ event, users, compact, onClick, onDelete }: EventCar
           {event.all_day && (
             <span className="text-xs text-text-muted font-body">All Day</span>
           )}
-
-          {/* Delete button - always visible on non-compact, hover on compact */}
-          {onDelete && (
-            <motion.button
-              whileTap={{ scale: 0.8 }}
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className={`ml-auto text-text-muted hover:text-error transition-colors shrink-0 ${compact ? 'opacity-0 group-hover:opacity-100' : ''}`}
-            >
-              <Trash2 size={compact ? 12 : 14} />
-            </motion.button>
-          )}
         </div>
 
         <p className={`font-body font-medium text-text-primary mt-1 ${compact ? 'text-sm' : 'text-base wall:text-xl'}`}>
@@ -108,7 +98,7 @@ export function EventCard({ event, users, compact, onClick, onDelete }: EventCar
         )}
       </motion.div>
 
-      {/* Long-press expanded actions (bonus) */}
+      {/* Long-press actions */}
       <AnimatePresence>
         {showActions && (
           <>
@@ -120,6 +110,15 @@ export function EventCard({ event, users, compact, onClick, onDelete }: EventCar
               transition={{ duration: 0.15 }}
               className="absolute right-2 top-full mt-1 z-50 flex gap-1 bg-bg-card rounded-xl border border-border shadow-xl p-1.5"
             >
+              {onEdit && (
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => { setShowActions(false); onEdit(event); }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-accent-primary hover:bg-accent-primary/10 transition-colors"
+                >
+                  <Pencil size={14} /> Edit
+                </motion.button>
+              )}
               {onDelete && (
                 <motion.button
                   whileTap={{ scale: 0.85 }}

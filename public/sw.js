@@ -1,4 +1,4 @@
-const CACHE_NAME = 'myfamily-v1';
+const CACHE_NAME = 'myfamily-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -32,6 +32,9 @@ self.addEventListener('fetch', (event) => {
 
   // Skip supabase realtime/auth
   if (url.hostname.includes('supabase')) return;
+
+  // Never cache version check or API data calls — always go to network
+  if (url.pathname.startsWith('/api/')) return;
 
   // HTML navigations: network-first
   if (request.mode === 'navigate') {

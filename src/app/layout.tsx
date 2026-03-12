@@ -34,9 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-bg-primary text-text-primary font-body antialiased">
         <QueryProvider>
+          <AutoRefresh />
           <VirtualKeyboardProvider>{children}</VirtualKeyboardProvider>
         </QueryProvider>
-        <AutoRefresh />
         <ServiceWorkerRegistrar />
       </body>
     </html>

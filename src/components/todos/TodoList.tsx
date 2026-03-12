@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Flag, Check, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Flag, Check, Trash2, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react';
 import { useTodos } from '@/lib/hooks/useTodos';
 import { useUsers } from '@/lib/hooks/useUsers';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -15,13 +15,18 @@ const PRIORITY_CONFIG = {
 } as const;
 
 export function TodoList({ userId }: { userId?: string }) {
-  const { data: todos = [], addTodo, toggleTodo, deleteTodo } = useTodos();
+  const { data: todos = [], addTodo, updateTodo, toggleTodo, deleteTodo } = useTodos();
   const { data: users = [] } = useUsers();
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [assignTo, setAssignTo] = useState<string[]>([]);
   const [showDone, setShowDone] = useState(false);
+
+  // Edit state
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editPriority, setEditPriority] = useState<'high' | 'medium' | 'low'>('medium');
 
   const filteredTodos = userId
     ? todos.filter((t) => t.todo_users?.some((tu) => tu.user_id === userId) || t.created_by === userId)
@@ -39,6 +44,18 @@ export function TodoList({ userId }: { userId?: string }) {
     setPriority('medium');
     setAssignTo([]);
     setShowAdd(false);
+  };
+
+  const handleEdit = (todo: Todo) => {
+    setEditingTodo(todo);
+    setEditTitle(todo.title);
+    setEditPriority(todo.priority);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingTodo || !editTitle.trim()) return;
+    updateTodo.mutate({ id: editingTodo.id, title: editTitle, priority: editPriority });
+    setEditingTodo(null);
   };
 
   return (
@@ -97,10 +114,46 @@ export function TodoList({ userId }: { userId?: string }) {
         )}
       </AnimatePresence>
 
+      {/* Edit form */}
+      <AnimatePresence>
+        {editingTodo && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-bg-card rounded-2xl border-2 border-accent-primary/30 p-4 space-y-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-body text-xs font-bold text-accent-primary">Editing to-do</span>
+              <button onClick={() => setEditingTodo(null)} className="text-text-muted"><X size={16} /></button>
+            </div>
+            <input
+              autoFocus
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+              placeholder="What needs to be done?"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border font-body text-sm text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-accent-primary/30"
+            />
+            <div className="flex items-center gap-2">
+              {(['high', 'medium', 'low'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setEditPriority(p)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-body text-xs font-semibold transition-all ${editPriority === p ? 'ring-2 shadow-sm' : 'opacity-50'}`}
+                  style={{ backgroundColor: `${PRIORITY_CONFIG[p].color}20`, color: PRIORITY_CONFIG[p].color, '--tw-ring-color': PRIORITY_CONFIG[p].color } as React.CSSProperties}
+                >
+                  <Flag size={12} /> {PRIORITY_CONFIG[p].label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <motion.button whileTap={{ scale: 0.95 }} onClick={handleSaveEdit} className="px-4 py-2 rounded-xl bg-accent-primary text-white font-body font-semibold text-xs">Save</motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setEditingTodo(null)} className="px-4 py-2 rounded-xl bg-bg-secondary text-text-secondary font-body text-xs">Cancel</motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Active items */}
       <div className="space-y-2">
         {active.map((todo) => (
-          <TodoItem key={todo.id} todo={todo} users={users} onToggle={toggleTodo.mutate} onDelete={deleteTodo.mutate} />
+          <TodoItem key={todo.id} todo={todo} users={users} onToggle={toggleTodo.mutate} onDelete={deleteTodo.mutate} onEdit={handleEdit} />
         ))}
         {active.length === 0 && <p className="text-text-muted font-body text-sm italic py-2">All done! 🎉</p>}
       </div>
@@ -116,7 +169,7 @@ export function TodoList({ userId }: { userId?: string }) {
             {showDone && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden pt-2">
                 {done.map((todo) => (
-                  <TodoItem key={todo.id} todo={todo} users={users} onToggle={toggleTodo.mutate} onDelete={deleteTodo.mutate} />
+                  <TodoItem key={todo.id} todo={todo} users={users} onToggle={toggleTodo.mutate} onDelete={deleteTodo.mutate} onEdit={handleEdit} />
                 ))}
               </motion.div>
             )}
@@ -127,32 +180,91 @@ export function TodoList({ userId }: { userId?: string }) {
   );
 }
 
-function TodoItem({ todo, users, onToggle, onDelete }: { todo: Todo; users: import('@/types').User[]; onToggle: (v: { id: string; completed: boolean }) => void; onDelete: (id: string) => void }) {
+function TodoItem({ todo, users, onToggle, onDelete, onEdit }: { todo: Todo; users: import('@/types').User[]; onToggle: (v: { id: string; completed: boolean }) => void; onDelete: (id: string) => void; onEdit: (todo: Todo) => void }) {
   const assignedUsers = users.filter((u) => todo.todo_users?.some((tu) => tu.user_id === u.id));
+  const [showActions, setShowActions] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+
+  const handlePointerDown = useCallback(() => {
+    didLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      setShowActions(true);
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 500);
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+  }, []);
 
   return (
-    <motion.div layout className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-bg-card border border-border transition-opacity ${todo.completed ? 'opacity-50' : ''}`}>
-      <motion.button
-        whileTap={{ scale: 0.8 }}
-        onClick={() => onToggle({ id: todo.id, completed: !todo.completed })}
-        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${todo.completed ? 'bg-success border-success text-white' : 'border-border'}`}
+    <div className="relative">
+      <motion.div
+        layout
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-bg-card border border-border transition-opacity select-none ${todo.completed ? 'opacity-50' : ''}`}
       >
-        {todo.completed && <Check size={14} strokeWidth={3} />}
-      </motion.button>
-
-      <div className="flex-1 min-w-0">
-        <p className={`font-body text-sm ${todo.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>{todo.title}</p>
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PRIORITY_CONFIG[todo.priority].color }} title={todo.priority} />
-        {assignedUsers.map((u) => (
-          <UserAvatar key={u.id} name={u.name} color={u.avatar_color} size="xs" />
-        ))}
-        <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(todo.id)} className="ml-1 text-text-muted hover:text-error transition-colors">
-          <Trash2 size={14} />
+        <motion.button
+          whileTap={{ scale: 0.8 }}
+          onClick={() => onToggle({ id: todo.id, completed: !todo.completed })}
+          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${todo.completed ? 'bg-success border-success text-white' : 'border-border'}`}
+        >
+          {todo.completed && <Check size={14} strokeWidth={3} />}
         </motion.button>
-      </div>
-    </motion.div>
+
+        <div className="flex-1 min-w-0">
+          <p className={`font-body text-sm ${todo.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>{todo.title}</p>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PRIORITY_CONFIG[todo.priority].color }} title={todo.priority} />
+          {assignedUsers.map((u) => (
+            <UserAvatar key={u.id} name={u.name} color={u.avatar_color} size="xs" />
+          ))}
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(todo.id)} className="ml-1 text-text-muted hover:text-error transition-colors">
+            <Trash2 size={14} />
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* Long-press actions */}
+      <AnimatePresence>
+        {showActions && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-2 top-full mt-1 z-50 flex gap-1 bg-bg-card rounded-xl border border-border shadow-xl p-1.5"
+            >
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={() => { setShowActions(false); onEdit(todo); }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-accent-primary hover:bg-accent-primary/10 transition-colors"
+              >
+                <Pencil size={14} /> Edit
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={() => { setShowActions(false); onDelete(todo.id); }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-error hover:bg-error/10 transition-colors"
+              >
+                <Trash2 size={14} /> Delete
+              </motion.button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

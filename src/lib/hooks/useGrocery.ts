@@ -57,6 +57,14 @@ export function useGrocery() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['grocery'] }),
   });
 
+  const updateItem = useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; item?: string; quantity?: string | null; category?: GroceryItem['category'] }) => {
+      const { error } = await supabase.from('grocery_items').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['grocery'] }),
+  });
+
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('grocery_items').delete().eq('id', id);
@@ -77,5 +85,5 @@ export function useGrocery() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['grocery'] }),
   });
 
-  return { ...query, addItem, toggleItem, deleteItem, clearChecked };
+  return { ...query, addItem, toggleItem, updateItem, deleteItem, clearChecked };
 }

@@ -93,6 +93,20 @@ export function useChores() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chore_completions'] }),
   });
 
+  const updateChore = useMutation({
+    mutationFn: async ({ id, userIds, ...updates }: Partial<Chore> & { id: string; userIds?: string[] }) => {
+      const { error } = await supabase.from('chores').update(updates).eq('id', id);
+      if (error) throw error;
+      if (userIds) {
+        await supabase.from('chore_users').delete().eq('chore_id', id);
+        if (userIds.length > 0) {
+          await supabase.from('chore_users').insert(userIds.map((uid) => ({ chore_id: id, user_id: uid })));
+        }
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chores'] }),
+  });
+
   const deleteChore = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('chores').delete().eq('id', id);
@@ -105,6 +119,7 @@ export function useChores() {
     ...query,
     completions: completionsQuery.data || [],
     addChore,
+    updateChore,
     completeChore,
     uncompleteChore,
     deleteChore,

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Check, Trash2, ShoppingCart } from 'lucide-react';
+import { Plus, Check, Trash2, ShoppingCart, Pencil, X } from 'lucide-react';
 import { useGrocery } from '@/lib/hooks/useGrocery';
 import type { GroceryItem } from '@/types';
 
@@ -16,11 +16,15 @@ const CATEGORIES = [
 ];
 
 export function GroceryList() {
-  const { data: items = [], addItem, toggleItem, deleteItem, clearChecked } = useGrocery();
+  const { data: items = [], addItem, toggleItem, updateItem, deleteItem, clearChecked } = useGrocery();
   const [showAdd, setShowAdd] = useState(false);
   const [itemName, setItemName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [category, setCategory] = useState<GroceryItem['category']>('other');
+  const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editQty, setEditQty] = useState('');
+  const [editCategory, setEditCategory] = useState<GroceryItem['category']>('other');
 
   const grouped = CATEGORIES.map((cat) => ({
     ...cat,
@@ -37,6 +41,19 @@ export function GroceryList() {
     setQuantity('');
     setCategory('other');
     setShowAdd(false);
+  };
+
+  const handleEdit = (item: GroceryItem) => {
+    setEditingItem(item);
+    setEditName(item.item);
+    setEditQty(item.quantity || '');
+    setEditCategory(item.category);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingItem || !editName.trim()) return;
+    updateItem.mutate({ id: editingItem.id, item: editName, quantity: editQty || null, category: editCategory });
+    setEditingItem(null);
   };
 
   return (
@@ -80,13 +97,40 @@ export function GroceryList() {
         )}
       </AnimatePresence>
 
+      {/* Edit inline form */}
+      <AnimatePresence>
+        {editingItem && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-bg-card rounded-2xl border-2 border-accent-primary/30 p-4 space-y-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-body text-xs font-bold text-accent-primary">Editing item</span>
+              <button onClick={() => setEditingItem(null)} className="text-text-muted"><X size={16} /></button>
+            </div>
+            <div className="flex gap-2">
+              <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()} placeholder="Item name" className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border font-body text-sm text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-accent-primary/30" />
+              <input value={editQty} onChange={(e) => setEditQty(e.target.value)} placeholder="Qty" className="w-20 px-3 py-3 rounded-xl bg-bg-secondary border border-border font-body text-sm text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-accent-primary/30" />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {CATEGORIES.map((cat) => (
+                <button key={cat.key} onClick={() => setEditCategory(cat.key)} className={`px-3 py-1.5 rounded-lg font-body text-xs font-semibold transition-all ${editCategory === cat.key ? 'text-white shadow-sm' : 'bg-bg-secondary text-text-secondary'}`} style={editCategory === cat.key ? { backgroundColor: cat.color } : {}}>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <motion.button whileTap={{ scale: 0.95 }} onClick={handleSaveEdit} className="px-4 py-2 rounded-xl bg-accent-primary text-white font-body font-semibold text-xs">Save</motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setEditingItem(null)} className="px-4 py-2 rounded-xl bg-bg-secondary text-text-secondary font-body text-xs">Cancel</motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Items by category */}
       {grouped.map((group) => (
         <div key={group.key}>
           <p className="font-body text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{group.label}</p>
           <div className="space-y-1.5">
             {group.items.map((item) => (
-              <GroceryRow key={item.id} item={item} onToggle={toggleItem.mutate} onDelete={deleteItem.mutate} />
+              <GroceryRow key={item.id} item={item} onToggle={toggleItem.mutate} onDelete={deleteItem.mutate} onEdit={handleEdit} />
             ))}
           </div>
         </div>
@@ -102,23 +146,89 @@ export function GroceryList() {
   );
 }
 
-function GroceryRow({ item, onToggle, onDelete }: { item: GroceryItem; onToggle: (v: { id: string; checked: boolean }) => void; onDelete: (id: string) => void }) {
+function GroceryRow({ item, onToggle, onDelete, onEdit }: { item: GroceryItem; onToggle: (v: { id: string; checked: boolean }) => void; onDelete: (id: string) => void; onEdit: (item: GroceryItem) => void }) {
+  const [showActions, setShowActions] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+
+  const handlePointerDown = useCallback(() => {
+    didLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      setShowActions(true);
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 500);
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
   return (
-    <motion.div layout className={`flex items-center gap-3 px-4 py-2.5 rounded-xl bg-bg-card border border-border transition-opacity ${item.checked ? 'opacity-40' : ''}`}>
-      <motion.button
-        whileTap={{ scale: 0.8 }}
-        onClick={() => onToggle({ id: item.id, checked: !item.checked })}
-        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${item.checked ? 'bg-success border-success text-white' : 'border-border'}`}
+    <div className="relative">
+      <motion.div
+        layout
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl bg-bg-card border border-border transition-opacity select-none ${item.checked ? 'opacity-40' : ''}`}
       >
-        {item.checked && <Check size={14} strokeWidth={3} />}
-      </motion.button>
-      <span className={`flex-1 font-body text-sm ${item.checked ? 'line-through text-text-muted' : 'text-text-primary'}`}>
-        {item.item}
-        {item.quantity && <span className="text-text-muted ml-1.5">× {item.quantity}</span>}
-      </span>
-      <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(item.id)} className="text-text-muted hover:text-error transition-colors">
-        <Trash2 size={14} />
-      </motion.button>
-    </motion.div>
+        <motion.button
+          whileTap={{ scale: 0.8 }}
+          onClick={() => onToggle({ id: item.id, checked: !item.checked })}
+          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${item.checked ? 'bg-success border-success text-white' : 'border-border'}`}
+        >
+          {item.checked && <Check size={14} strokeWidth={3} />}
+        </motion.button>
+        <span className={`flex-1 font-body text-sm ${item.checked ? 'line-through text-text-muted' : 'text-text-primary'}`}>
+          {item.item}
+          {item.quantity && <span className="text-text-muted ml-1.5">× {item.quantity}</span>}
+        </span>
+        <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(item.id)} className="text-text-muted hover:text-error transition-colors">
+          <Trash2 size={14} />
+        </motion.button>
+      </motion.div>
+
+      {/* Long-press actions */}
+      <AnimatePresence>
+        {showActions && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-2 top-full mt-1 z-50 flex gap-1 bg-bg-card rounded-xl border border-border shadow-xl p-1.5"
+            >
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={() => { setShowActions(false); onEdit(item); }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-accent-primary hover:bg-accent-primary/10 transition-colors"
+              >
+                <Pencil size={14} /> Edit
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={() => { setShowActions(false); onDelete(item.id); }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-error hover:bg-error/10 transition-colors"
+              >
+                <Trash2 size={14} /> Delete
+              </motion.button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

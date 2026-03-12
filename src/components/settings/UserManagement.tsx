@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit3, Trash2, X, Check } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, Check, RefreshCw } from 'lucide-react';
 import { useUsers } from '@/lib/hooks/useUsers';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { User } from '@/types';
@@ -156,6 +156,17 @@ export function UserManagement() {
             )}
           </motion.div>
         ))}
+      </div>
+
+      {/* Reload button */}
+      <div className="pt-4 border-t border-border">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-bg-secondary border border-border text-text-secondary hover:text-text-primary font-body font-semibold text-sm transition-colors w-full justify-center"
+        >
+          <RefreshCw size={16} /> Reload Page
+        </motion.button>
       </div>
     </div>
   );

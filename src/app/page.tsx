@@ -41,10 +41,11 @@ export default function HomePage() {
     return { start: startOfWeek(selectedDate), end: endOfWeek(selectedDate) };
   }, [selectedDate, viewMode]);
 
-  const { data: rawEvents = [], addEvent, deleteEvent } = useEvents(dateRange.start, dateRange.end);
+  const { data: rawEvents = [], addEvent, updateEvent, deleteEvent } = useEvents(dateRange.start, dateRange.end);
   const events = useMemo(() => expandRecurringEvents(rawEvents, dateRange.start, dateRange.end), [rawEvents, dateRange]);
 
   const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<import('@/types').CalendarEvent | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
@@ -66,8 +67,18 @@ export default function HomePage() {
   if (!isClient) return null;
 
   const handleCreateEvent = async (data: Parameters<typeof addEvent.mutate>[0]) => {
-    await addEvent.mutateAsync(data);
+    if (editingEvent) {
+      await updateEvent.mutateAsync({ id: editingEvent.id, ...data });
+      setEditingEvent(null);
+    } else {
+      await addEvent.mutateAsync(data);
+    }
     setShowEventForm(false);
+  };
+
+  const handleEditEvent = (event: import('@/types').CalendarEvent) => {
+    setEditingEvent(event);
+    setShowEventForm(true);
   };
 
   // Determine current user for user tabs
@@ -155,7 +166,7 @@ export default function HomePage() {
               </h3>
               <div className="space-y-2">
                 {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">No events today</p>}
-                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} compact onDelete={() => deleteEvent.mutate(event.id)} />)}
+                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} compact onDelete={() => deleteEvent.mutate(event.id)} onEdit={handleEditEvent} />)}
               </div>
             </div>
             <div className="p-5 border-t border-border">
@@ -173,7 +184,7 @@ export default function HomePage() {
         </div>
 
         <AnimatePresence>
-          {showEventForm && <EventForm users={users} onSubmit={handleCreateEvent} onClose={() => setShowEventForm(false)} />}
+          {showEventForm && <EventForm users={users} onSubmit={handleCreateEvent} onClose={() => { setShowEventForm(false); setEditingEvent(null); }} editEvent={editingEvent || undefined} />}
         </AnimatePresence>
         {settingsPanel}
       </div>
@@ -208,7 +219,7 @@ export default function HomePage() {
               <h3 className="font-display text-lg font-semibold text-text-primary mb-3">Today</h3>
               <div className="space-y-2">
                 {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">Nothing scheduled today</p>}
-                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} onDelete={() => deleteEvent.mutate(event.id)} />)}
+                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} onDelete={() => deleteEvent.mutate(event.id)} onEdit={handleEditEvent} />)}
               </div>
             </div>
           </>
@@ -257,7 +268,7 @@ export default function HomePage() {
       <MobileTabBar />
 
       <AnimatePresence>
-        {showEventForm && <EventForm users={users} onSubmit={handleCreateEvent} onClose={() => setShowEventForm(false)} />}
+        {showEventForm && <EventForm users={users} onSubmit={handleCreateEvent} onClose={() => { setShowEventForm(false); setEditingEvent(null); }} editEvent={editingEvent || undefined} />}
       </AnimatePresence>
       {settingsPanel}
     </div>
