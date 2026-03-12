@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { AutoRefresh } from '@/components/providers/AutoRefresh';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-bg-primary text-text-primary font-body antialiased">
         <QueryProvider>{children}</QueryProvider>
+        <AutoRefresh />
         <ServiceWorkerRegistrar />
       </body>
     </html>
