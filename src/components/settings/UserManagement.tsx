@@ -2,10 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit3, Trash2, X, Check, RefreshCw } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, Check, RefreshCw, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useUsers } from '@/lib/hooks/useUsers';
+import { createClient } from '@/lib/supabase/client';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { User } from '@/types';
+
+const FAMILY_ID = process.env.NEXT_PUBLIC_FAMILY_ID || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 const AVATAR_COLORS = [
   '#E57373', '#F06292', '#BA68C8', '#9575CD', '#7986CB',
@@ -114,7 +118,7 @@ export function UserManagement() {
           >
             {editing === user.id ? (
               <div className="space-y-4">
-                <UserFormFields form={form} setForm={setForm} />
+                <UserFormFields form={form} setForm={setForm} userId={user.id} />
                 <div className="flex gap-3">
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleSave(user.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-primary text-white font-body font-semibold text-sm">
                     <Check size={16} /> Save
@@ -172,7 +176,51 @@ export function UserManagement() {
   );
 }
 
-function UserFormFields({ form, setForm }: { form: UserFormData; setForm: (f: UserFormData) => void }) {
+function UserFormFields({ form, setForm, userId }: { form: UserFormData; setForm: (f: UserFormData) => void; userId?: string }) {
+  const supabase = createClient();
+  const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [testError, setTestError] = useState('');
+
+  const { data: family } = useQuery({
+    queryKey: ['family-notifications', FAMILY_ID],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('families')
+        .select('notification_email, notification_app_password')
+        .eq('id', FAMILY_ID)
+        .single();
+      if (error) throw error;
+      return data as { notification_email: string | null; notification_app_password: string | null };
+    },
+  });
+
+  const hasGmail = !!(family?.notification_email && family?.notification_app_password);
+  const canTest = !!(form.phone_number && form.carrier && hasGmail && userId);
+
+  const handleTestText = async () => {
+    if (!canTest) return;
+    setTestStatus('sending');
+    setTestError('');
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipients: [{ userId, name: form.name }],
+          message: `👋 Hey ${form.name}, texts are working!`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to send');
+      setTestStatus('success');
+      setTimeout(() => setTestStatus('idle'), 4000);
+    } catch (err: unknown) {
+      setTestStatus('error');
+      setTestError(err instanceof Error ? err.message : 'Failed');
+      setTimeout(() => setTestStatus('idle'), 4000);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <input
@@ -200,8 +248,45 @@ function UserFormFields({ form, setForm }: { form: UserFormData; setForm: (f: Us
           <option value="verizon">Verizon</option>
           <option value="tmobile">T-Mobile</option>
           <option value="sprint">Sprint</option>
+          <option value="uscellular">US Cellular</option>
+          <option value="boost">Boost Mobile</option>
+          <option value="cricket">Cricket</option>
+          <option value="metro">Metro PCS</option>
         </select>
      </div>
+
+     {/* Send Test Text */}
+     {userId && (
+       <div className="space-y-2">
+         <div className="flex items-center gap-2">
+           <motion.button
+             whileTap={{ scale: 0.95 }}
+             onClick={handleTestText}
+             disabled={!canTest || testStatus === 'sending'}
+             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary border border-border text-text-secondary font-body text-xs font-semibold hover:text-text-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+           >
+             {testStatus === 'sending' ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+             Send Test Text
+           </motion.button>
+           <AnimatePresence>
+             {testStatus === 'success' && (
+               <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-success font-body text-xs">
+                 <CheckCircle size={12} /> Sent!
+               </motion.span>
+             )}
+             {testStatus === 'error' && (
+               <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-error font-body text-xs">
+                 <AlertCircle size={12} /> {testError}
+               </motion.span>
+             )}
+           </AnimatePresence>
+         </div>
+         {!hasGmail && form.phone_number && form.carrier && (
+           <p className="font-body text-xs text-text-muted italic">Set up Gmail in notification settings first</p>
+         )}
+       </div>
+     )}
+
      <input
        type="url"
        placeholder="Google Calendar iCal URL (optional)"

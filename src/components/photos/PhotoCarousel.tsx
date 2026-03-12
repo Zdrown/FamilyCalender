@@ -13,6 +13,10 @@ export function PhotoCarousel({ scope }: { scope?: string }) {
   }, [photos.length]);
 
   useEffect(() => {
+    if (current >= photos.length) setCurrent(0);
+  }, [photos.length, current]);
+
+  useEffect(() => {
     const timer = setInterval(advance, 10000);
     return () => clearInterval(timer);
   }, [advance]);

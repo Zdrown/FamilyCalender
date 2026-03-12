@@ -25,6 +25,7 @@ import { WeatherWidget } from '@/components/weather/WeatherWidget';
 import { PhotoCarousel } from '@/components/photos/PhotoCarousel';
 import { PhotoUpload } from '@/components/photos/PhotoUpload';
 import { UserManagement } from '@/components/settings/UserManagement';
+import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Screensaver } from '@/components/ui/Screensaver';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
@@ -66,8 +67,8 @@ export default function HomePage() {
 
   if (!isClient) return null;
 
-  const handleCreateEvent = async (data: { title: string; date: string; start_time: string | null; end_time: string | null; all_day: boolean; recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'; userIds: string[]; isFamily: boolean }) => {
-    const { isFamily, ...eventData } = data;
+  const handleCreateEvent = async (data: { title: string; date: string; start_time: string | null; end_time: string | null; all_day: boolean; recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'; userIds: string[]; isFamily: boolean; sendSms: boolean }) => {
+    const { isFamily, sendSms, ...eventData } = data;
     if (editingEvent) {
       await updateEvent.mutateAsync({ id: editingEvent.id, ...eventData });
       setEditingEvent(null);
@@ -76,6 +77,37 @@ export default function HomePage() {
     }
     setShowEventForm(false);
     hapticSuccess();
+
+    // Fire SMS via carrier email-to-SMS gateway
+    if (sendSms) {
+      const taggedUsers = isFamily
+        ? users.filter(u => u.phone_number && u.carrier)
+        : users.filter(u => data.userIds.includes(u.id) && u.phone_number && u.carrier);
+
+      if (taggedUsers.length > 0) {
+        const formatTime = (time: string) => {
+          const [h, m] = time.split(':').map(Number);
+          const period = h >= 12 ? 'PM' : 'AM';
+          const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+          return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+        };
+        const eventTime = data.all_day ? undefined : data.start_time ? formatTime(data.start_time) : undefined;
+
+        const eventDate = format(new Date(data.date + 'T00:00:00'), 'MMM d, yyyy');
+        const msg = eventTime
+          ? `📅 New event: ${data.title} on ${eventDate} at ${eventTime}`
+          : `📅 New event: ${data.title} on ${eventDate}`;
+
+        fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipients: taggedUsers.map(u => ({ userId: u.id, name: u.name })),
+            message: msg,
+          }),
+        }).then(r => r.json()).then(r => console.log('SMS sent:', r)).catch(e => console.error('SMS error:', e));
+      }
+    }
   };
 
   const handleEditEvent = (event: import('@/types').CalendarEvent) => {
@@ -103,6 +135,7 @@ export default function HomePage() {
               <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSettings(false)} className="w-10 h-10 rounded-xl bg-bg-secondary flex items-center justify-center text-text-muted"><X size={20} /></motion.button>
             </div>
             <UserManagement />
+            <NotificationSettings />
           </motion.div>
         </motion.div>
       )}

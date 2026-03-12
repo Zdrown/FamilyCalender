@@ -15,6 +15,7 @@ interface EventFormData {
   recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
   userIds: string[];
   isFamily: boolean;
+  sendSms: boolean;
 }
 
 interface EventFormProps {
@@ -132,6 +133,7 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
     editEvent?.event_users?.map((eu) => eu.user_id) || []
   );
   const [isFamily, setIsFamily] = useState(false);
+  const [sendSms, setSendSms] = useState(false);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
@@ -155,6 +157,7 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
       recurrence,
       userIds: isFamily ? users.map((u) => u.id) : selectedUserIds,
       isFamily,
+      sendSms,
     });
   };
 
@@ -323,6 +326,49 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
                   </motion.button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* SMS Notification Toggle */}
+          {(isFamily || selectedUserIds.length > 0) && (
+            <div className="space-y-2">
+              <label className="flex items-center justify-between gap-3 cursor-pointer px-4 py-3 rounded-xl bg-bg-secondary border border-border">
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-primary"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span className="font-body text-sm text-text-primary font-medium">Send text notification</span>
+                </div>
+                <div
+                  onClick={() => setSendSms(!sendSms)}
+                  className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${sendSms ? 'bg-accent-primary' : 'bg-border'}`}
+                >
+                  <motion.div
+                    animate={{ x: sendSms ? 20 : 2 }}
+                    className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                  />
+                </div>
+              </label>
+
+              {/* Missing phone/carrier warnings */}
+              {sendSms && (() => {
+                const taggedUsers = isFamily ? users : users.filter(u => selectedUserIds.includes(u.id));
+                const missingInfo = taggedUsers.filter(u => !u.phone_number || !u.carrier);
+                if (missingInfo.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap gap-1.5 px-1">
+                    {missingInfo.map(u => (
+                      <span
+                        key={u.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-body font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                        title="Set up phone & carrier in Settings"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                        {u.name} — {!u.phone_number ? 'No phone' : 'No carrier'}
+                      </span>
+                    ))}
+                    <span className="text-[10px] text-text-muted font-body">(Set up in Settings)</span>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

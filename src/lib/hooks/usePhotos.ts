@@ -42,7 +42,10 @@ export function usePhotos(scope?: string) {
     mutationFn: async ({ file, caption, uploadedBy, photoScope }: { file: File; caption?: string; uploadedBy?: string; photoScope?: string }) => {
       const fileName = `${FAMILY_ID}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage.from('photos').upload(fileName, file);
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Photo storage upload failed:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(fileName);
 
@@ -57,7 +60,10 @@ export function usePhotos(scope?: string) {
         })
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error('Photo DB insert failed:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['photos'] }),
@@ -65,6 +71,25 @@ export function usePhotos(scope?: string) {
 
   const deletePhoto = useMutation({
     mutationFn: async (id: string) => {
+      // Fetch the photo row to get the URL for storage cleanup
+      const { data: photo, error: fetchError } = await supabase
+        .from('photos')
+        .select('url')
+        .eq('id', id)
+        .single();
+      if (fetchError) throw fetchError;
+
+      // Extract storage path from URL (everything after "photos/")
+      if (photo?.url) {
+        const marker = '/storage/v1/object/public/photos/';
+        const idx = photo.url.indexOf(marker);
+        if (idx !== -1) {
+          const storagePath = photo.url.substring(idx + marker.length);
+          const { error: storageError } = await supabase.storage.from('photos').remove([storagePath]);
+          if (storageError) console.error('Failed to delete photo from storage:', storageError);
+        }
+      }
+
       const { error } = await supabase.from('photos').delete().eq('id', id);
       if (error) throw error;
     },

@@ -5,6 +5,8 @@ export interface Family {
   weather_lat: number | null;
   weather_lng: number | null;
   theme_season: 'auto' | 'spring' | 'summer' | 'fall' | 'winter';
+  notification_email?: string;
+  notification_app_password?: string;
   created_at: string;
 }
 
