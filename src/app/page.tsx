@@ -66,14 +66,16 @@ export default function HomePage() {
 
   if (!isClient) return null;
 
-  const handleCreateEvent = async (data: Parameters<typeof addEvent.mutate>[0]) => {
+  const handleCreateEvent = async (data: { title: string; date: string; start_time: string | null; end_time: string | null; all_day: boolean; recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'; userIds: string[]; isFamily: boolean }) => {
+    const { isFamily, ...eventData } = data;
     if (editingEvent) {
-      await updateEvent.mutateAsync({ id: editingEvent.id, ...data });
+      await updateEvent.mutateAsync({ id: editingEvent.id, ...eventData });
       setEditingEvent(null);
     } else {
-      await addEvent.mutateAsync(data);
+      await addEvent.mutateAsync(eventData);
     }
     setShowEventForm(false);
+    hapticSuccess();
   };
 
   const handleEditEvent = (event: import('@/types').CalendarEvent) => {
