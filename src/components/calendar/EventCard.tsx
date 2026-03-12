@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Pencil } from 'lucide-react';
 import { formatTime } from '@/lib/utils/dates';
@@ -21,13 +22,24 @@ export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: 
   const eventColor = event.color || assignedUsers[0]?.avatar_color || 'var(--color-accent-primary)';
 
   const [showActions, setShowActions] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = useRef(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handlePointerDown = useCallback(() => {
     didLongPress.current = false;
     longPressTimer.current = setTimeout(() => {
       didLongPress.current = true;
+      // Calculate position for fixed menu
+      if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        const menuWidth = 180;
+        let left = rect.right - menuWidth;
+        if (left < 8) left = 8;
+        if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+        setMenuPos({ top: rect.bottom + 4, left });
+      }
       setShowActions(true);
       if (navigator.vibrate) navigator.vibrate(30);
     }, 500);
@@ -50,8 +62,43 @@ export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: 
     }
   }, []);
 
+  // Portal-based menu for long-press actions
+  const actionsMenu = showActions && typeof document !== 'undefined' ? createPortal(
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[9998]" onClick={() => setShowActions(false)} />
+      <motion.div
+        initial={{ opacity: 0, y: -4, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -4, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="fixed z-[9999] flex gap-1 bg-bg-card rounded-xl border border-border shadow-2xl p-1.5"
+        style={{ top: menuPos.top, left: menuPos.left }}
+      >
+        {onEdit && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => { setShowActions(false); onEdit(event); }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-accent-primary hover:bg-accent-primary/10 transition-colors"
+          >
+            <Pencil size={14} /> Edit
+          </motion.button>
+        )}
+        {onDelete && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => { setShowActions(false); onDelete(); }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-error hover:bg-error/10 transition-colors"
+          >
+            <Trash2 size={14} /> Delete
+          </motion.button>
+        )}
+      </motion.div>
+    </AnimatePresence>,
+    document.body
+  ) : null;
+
   return (
-    <div className="relative group">
+    <div className="relative group" ref={cardRef}>
       {/* Mobile compact: tiny pill */}
       {compact && (
         <motion.div
@@ -115,40 +162,7 @@ export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: 
         )}
       </motion.div>
 
-      {/* Long-press actions */}
-      <AnimatePresence>
-        {showActions && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-            <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="absolute right-2 top-full mt-1 z-50 flex gap-1 bg-bg-card rounded-xl border border-border shadow-xl p-1.5"
-            >
-              {onEdit && (
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={() => { setShowActions(false); onEdit(event); }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-accent-primary hover:bg-accent-primary/10 transition-colors"
-                >
-                  <Pencil size={14} /> Edit
-                </motion.button>
-              )}
-              {onDelete && (
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={() => { setShowActions(false); onDelete(); }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-body font-semibold text-error hover:bg-error/10 transition-colors"
-                >
-                  <Trash2 size={14} /> Delete
-                </motion.button>
-              )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {actionsMenu}
     </div>
   );
 }

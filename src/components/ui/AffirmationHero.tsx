@@ -22,7 +22,7 @@ export function AffirmationHero({ userId }: { userId?: string | null }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
-        className="cursor-pointer"
+        className="cursor-pointer lg:py-4 xl:py-6 lg:min-h-[100px] xl:min-h-[120px] flex items-center justify-center"
         onClick={() => setShowManage(!showManage)}
       >
         <p className="font-accent text-xl md:text-2xl wall:text-4xl italic text-text-primary/80 leading-relaxed text-center">

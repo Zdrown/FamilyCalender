@@ -325,9 +325,9 @@ function MeTab({ users, onUpdateUser }: { users: import('@/types').User[]; onUpd
         <h2 className="font-display text-xl font-bold text-text-primary">Who are you?</h2>
         <div className="grid grid-cols-2 gap-3">
           {users.map((u) => (
-            <motion.button key={u.id} whileTap={{ scale: 0.97 }} onClick={() => setSelectedUserId(u.id)} className="flex items-center gap-3 p-4 rounded-2xl bg-bg-card border border-border hover:shadow-md transition-all">
+            <motion.button key={u.id} whileTap={{ scale: 0.97 }} onClick={() => setSelectedUserId(u.id)} className="flex items-center gap-3 p-4 rounded-2xl bg-bg-card border border-border hover:shadow-md transition-all min-w-0 overflow-hidden">
               <UserAvatar name={u.name} color={u.avatar_color} size="lg" />
-              <span className="font-body text-base font-semibold text-text-primary">{u.name}</span>
+              <span className="font-body text-base font-semibold text-text-primary truncate max-w-[100px]">{u.name}</span>
             </motion.button>
           ))}
         </div>
