@@ -8,20 +8,20 @@ interface WeatherData {
 const cache = new Map<string, { data: WeatherData; timestamp: number }>();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
-// WMO Weather interpretation codes → emoji + description
+// WMO Weather interpretation codes → icon key + description
 function wmoToWeather(code: number): { icon: string; description: string } {
-  if (code === 0) return { icon: '☀️', description: 'Clear' };
-  if (code <= 3) return { icon: '⛅', description: 'Partly Cloudy' };
-  if (code <= 48) return { icon: '🌫️', description: 'Foggy' };
-  if (code <= 55) return { icon: '🌧️', description: 'Drizzle' };
-  if (code <= 57) return { icon: '🌧️', description: 'Freezing Drizzle' };
-  if (code <= 65) return { icon: '🌧️', description: 'Rain' };
-  if (code <= 67) return { icon: '🌧️', description: 'Freezing Rain' };
-  if (code <= 77) return { icon: '🌨️', description: 'Snow' };
-  if (code <= 82) return { icon: '🌦️', description: 'Rain Showers' };
-  if (code <= 86) return { icon: '🌨️', description: 'Snow Showers' };
-  if (code <= 99) return { icon: '⛈️', description: 'Thunderstorm' };
-  return { icon: '🌤️', description: 'Unknown' };
+  if (code === 0) return { icon: 'sun', description: 'Clear' };
+  if (code <= 3) return { icon: 'cloud-sun', description: 'Partly Cloudy' };
+  if (code <= 48) return { icon: 'cloud-fog', description: 'Foggy' };
+  if (code <= 55) return { icon: 'cloud-drizzle', description: 'Drizzle' };
+  if (code <= 57) return { icon: 'cloud-drizzle', description: 'Freezing Drizzle' };
+  if (code <= 65) return { icon: 'cloud-rain', description: 'Rain' };
+  if (code <= 67) return { icon: 'cloud-rain', description: 'Freezing Rain' };
+  if (code <= 77) return { icon: 'snowflake', description: 'Snow' };
+  if (code <= 82) return { icon: 'cloud-rain-wind', description: 'Rain Showers' };
+  if (code <= 86) return { icon: 'snowflake', description: 'Snow Showers' };
+  if (code <= 99) return { icon: 'cloud-lightning', description: 'Thunderstorm' };
+  return { icon: 'cloud', description: 'Unknown' };
 }
 
 export async function GET(request: Request) {
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
   } catch {
     // Fallback mock if API fails
     const mock: WeatherData = {
-      current: { temp: 72, description: 'Partly Cloudy', icon: '⛅', humidity: 55, wind: 8 },
+      current: { temp: 72, description: 'Partly Cloudy', icon: 'cloud-sun', humidity: 55, wind: 8 },
       forecast: Array.from({ length: 5 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() + i + 1);
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
           date: d.toISOString().split('T')[0],
           high: 70 + Math.round(Math.random() * 10),
           low: 55 + Math.round(Math.random() * 8),
-          icon: ['☀️', '⛅', '🌤️', '🌧️', '⛈️'][Math.floor(Math.random() * 5)],
+          icon: ['sun', 'cloud-sun', 'cloud', 'cloud-rain', 'cloud-lightning'][Math.floor(Math.random() * 5)],
           description: ['Sunny', 'Partly Cloudy', 'Mostly Clear', 'Light Rain', 'Thunderstorms'][Math.floor(Math.random() * 5)],
         };
       }),

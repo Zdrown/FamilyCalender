@@ -2,11 +2,48 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Droplets, Wind } from 'lucide-react';
+import {
+  Droplets, Wind, Sun, Cloud, CloudSun, CloudRain,
+  CloudDrizzle, CloudSnow, CloudLightning, CloudFog,
+  CloudRainWind, Snowflake,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface WeatherData {
   current: { temp: number; description: string; icon: string; humidity: number; wind: number };
   forecast: { date: string; high: number; low: number; icon: string; description: string }[];
+}
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  'sun': Sun,
+  'cloud': Cloud,
+  'cloud-sun': CloudSun,
+  'cloud-rain': CloudRain,
+  'cloud-drizzle': CloudDrizzle,
+  'cloud-snow': CloudSnow,
+  'cloud-lightning': CloudLightning,
+  'cloud-fog': CloudFog,
+  'cloud-rain-wind': CloudRainWind,
+  'snowflake': Snowflake,
+};
+
+const ICON_COLORS: Record<string, string> = {
+  'sun': '#FBBF24',
+  'cloud': '#94A3B8',
+  'cloud-sun': '#F59E0B',
+  'cloud-rain': '#60A5FA',
+  'cloud-drizzle': '#93C5FD',
+  'cloud-snow': '#CBD5E1',
+  'cloud-lightning': '#A78BFA',
+  'cloud-fog': '#9CA3AF',
+  'cloud-rain-wind': '#3B82F6',
+  'snowflake': '#BAE6FD',
+};
+
+function WeatherIcon({ icon, size, className }: { icon: string; size: number; className?: string }) {
+  const Icon = ICON_MAP[icon] || Cloud;
+  const color = ICON_COLORS[icon] || '#94A3B8';
+  return <Icon size={size} color={color} className={className} />;
 }
 
 function useUserLocation() {
@@ -42,7 +79,7 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
       if (!res.ok) throw new Error('Weather fetch failed');
       return res.json();
     },
-    enabled: tried, // wait until geolocation attempt is done
+    enabled: tried,
     refetchInterval: 30 * 60 * 1000,
     staleTime: 15 * 60 * 1000,
   });
@@ -58,7 +95,7 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
   if (compact) {
     return (
       <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r ${WEATHER_GRADIENT} shadow-lg`}>
-        <span className="text-3xl drop-shadow-md">{weather.current.icon}</span>
+        <WeatherIcon icon={weather.current.icon} size={28} />
         <div>
           <p className="font-display text-2xl font-bold leading-none text-white drop-shadow-sm">{weather.current.temp}°</p>
           <p className="font-body text-xs text-white opacity-80">{weather.current.description}</p>
@@ -85,9 +122,7 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
                 {weather.current.description}
               </p>
             </div>
-            <span className="text-7xl drop-shadow-xl animate-bounce" style={{ animationDuration: '3s' }}>
-              {weather.current.icon}
-            </span>
+            <WeatherIcon icon={weather.current.icon} size={72} className="drop-shadow-xl" />
           </div>
 
           <div className="flex gap-5 mt-4 text-white opacity-90">
@@ -115,7 +150,9 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
                 className="flex-1 text-center rounded-xl p-2.5 bg-bg-secondary border border-border/50 transition-transform hover:scale-105"
               >
                 <p className="font-body text-[10px] text-text-muted font-bold uppercase tracking-wide">{dayName}</p>
-                <p className="text-2xl my-1">{day.icon}</p>
+                <div className="flex justify-center my-1">
+                  <WeatherIcon icon={day.icon} size={24} />
+                </div>
                 <p className="font-display text-sm font-bold text-text-primary">{day.high}°</p>
                 <p className="font-body text-[10px] text-text-muted">{day.low}°</p>
               </div>
