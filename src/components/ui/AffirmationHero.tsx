@@ -25,7 +25,7 @@ export function AffirmationHero({ userId }: { userId?: string | null }) {
         className="cursor-pointer"
         onClick={() => setShowManage(!showManage)}
       >
-        <p className="font-accent text-2xl wall:text-4xl italic text-text-primary/80 leading-relaxed text-center">
+        <p className="font-accent text-xl md:text-2xl wall:text-4xl italic text-text-primary/80 leading-relaxed text-center">
           &ldquo;{todaysAffirmation?.text || 'Together we are stronger than we could ever be apart.'}&rdquo;
         </p>
       </motion.div>

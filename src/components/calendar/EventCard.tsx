@@ -52,19 +52,36 @@ export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: 
 
   return (
     <div className="relative group">
+      {/* Mobile compact: tiny pill */}
+      {compact && (
+        <motion.div
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerLeave}
+          whileTap={{ scale: 0.96 }}
+          className="md:hidden flex items-center gap-1 rounded-full px-1.5 py-0.5 cursor-pointer select-none truncate"
+          style={{ backgroundColor: `${eventColor}22`, borderLeft: `3px solid ${eventColor}` }}
+        >
+          <span className="font-body text-[9px] font-semibold text-text-primary truncate leading-tight">
+            {event.title.slice(0, 6)}{event.title.length > 6 ? '…' : ''}
+          </span>
+        </motion.div>
+      )}
+
+      {/* Desktop / non-compact: full card */}
       <motion.div
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         whileTap={{ scale: 0.98 }}
         className={`
-          w-full text-left rounded-xl transition-all cursor-pointer select-none
-          ${compact ? 'px-3 py-2' : 'px-4 py-3'}
+          w-full text-left rounded-lg md:rounded-xl transition-all cursor-pointer select-none
+          ${compact ? 'hidden md:block px-3 py-2' : 'px-3 py-2.5 md:px-4 md:py-3'}
           bg-bg-card border border-border hover:shadow-md
         `}
         style={{ borderLeftWidth: 4, borderLeftColor: eventColor }}
       >
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${compact ? 'hidden md:flex' : ''}`}>
           {/* User dots */}
           <div className="flex -space-x-1">
             {assignedUsers.slice(0, 3).map((user) => (
@@ -87,7 +104,7 @@ export function EventCard({ event, users, compact, onClick, onDelete, onEdit }: 
           )}
         </div>
 
-        <p className={`font-body font-medium text-text-primary mt-1 ${compact ? 'text-sm' : 'text-base wall:text-xl'}`}>
+        <p className={`font-body font-medium text-text-primary mt-0.5 md:mt-1 truncate ${compact ? 'text-[11px] md:text-sm' : 'text-sm md:text-base wall:text-xl'}`}>
           {event.title}
         </p>
 

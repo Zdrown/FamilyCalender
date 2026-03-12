@@ -94,12 +94,11 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r ${WEATHER_GRADIENT} shadow-lg`}>
-        <WeatherIcon icon={weather.current.icon} size={28} />
-        <div>
-          <p className="font-display text-2xl font-bold leading-none text-white drop-shadow-sm">{weather.current.temp}°</p>
-          <p className="font-body text-xs text-white opacity-80">{weather.current.description}</p>
-        </div>
+      <div className={`flex items-center gap-1.5 md:gap-3 px-2 py-1 md:px-4 md:py-3 rounded-xl md:rounded-2xl bg-gradient-to-r ${WEATHER_GRADIENT} shadow-lg`}>
+        <WeatherIcon icon={weather.current.icon} size={16} className="md:hidden" />
+        <WeatherIcon icon={weather.current.icon} size={22} className="hidden md:block" />
+        <p className="font-display text-sm md:text-2xl font-bold leading-none text-white drop-shadow-sm">{weather.current.temp}°</p>
+        <p className="font-body text-[10px] md:text-xs text-white opacity-80 hidden md:block">{weather.current.description}</p>
       </div>
     );
   }

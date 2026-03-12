@@ -177,7 +177,8 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-bg-card w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
+        className="bg-bg-card w-full max-w-lg rounded-t-3xl md:rounded-3xl p-5 md:p-6 shadow-2xl max-h-[90vh] md:max-h-[85vh] overflow-y-auto"
+        style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-2xl font-semibold text-text-primary">

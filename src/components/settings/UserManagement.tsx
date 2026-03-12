@@ -125,9 +125,9 @@ export function UserManagement() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4 flex-wrap md:flex-nowrap">
                 <UserAvatar name={user.name} color={user.avatar_color} size="md" />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 basis-0">
                   <p className="font-body font-semibold text-text-primary text-base">{user.name}</p>
                   {user.phone_number && (
                     <p className="font-body text-sm text-text-muted">{user.phone_number} {user.carrier && `· ${user.carrier}`}</p>
@@ -182,7 +182,7 @@ function UserFormFields({ form, setForm }: { form: UserFormData; setForm: (f: Us
         onChange={(e) => setForm({ ...form, name: e.target.value })}
         className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border font-body text-sm text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-accent-primary/30"
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <input
           type="tel"
           placeholder="Phone (optional)"

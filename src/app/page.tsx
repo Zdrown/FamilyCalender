@@ -96,8 +96,8 @@ export default function HomePage() {
   const settingsPanel = (
     <AnimatePresence>
       {showSettings && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center pt-8">
-          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-bg-primary rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-start justify-center md:pt-8">
+          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="bg-bg-primary rounded-t-3xl md:rounded-3xl shadow-2xl w-full md:max-w-lg max-h-[90vh] md:max-h-[85vh] overflow-y-auto p-5 md:p-6" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-2xl font-bold text-text-primary">Settings</h2>
               <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSettings(false)} className="w-10 h-10 rounded-xl bg-bg-secondary flex items-center justify-center text-text-muted"><X size={20} /></motion.button>
@@ -195,10 +195,10 @@ export default function HomePage() {
 
   // ─── Mobile / Desktop ───
   return (
-    <div className="min-h-screen flex flex-col bg-bg-primary pb-20">
+    <div className="min-h-screen flex flex-col bg-bg-primary" style={{ paddingBottom: 'calc(66px + env(safe-area-inset-bottom, 0px))' }}>
       <OfflineIndicator />
       <Screensaver />
-      <header className="flex items-center justify-between px-5 py-4 bg-bg-card border-b border-border">
+      <header className="flex items-center justify-between px-4 py-3 md:px-5 md:py-4 bg-bg-card border-b border-border" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
         <h1 className="font-display text-2xl font-bold text-text-primary tracking-tight">MyFamily</h1>
         <div className="flex items-center gap-2">
           <WeatherWidget compact />
@@ -217,7 +217,7 @@ export default function HomePage() {
           <>
             <FilterBar users={users} />
                   <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} onEventEdit={handleEditEvent} />
-            <div className="px-5 py-4">
+            <div className="px-4 py-3 md:px-5 md:py-4">
               <h3 className="font-display text-lg font-semibold text-text-primary mb-3">Today</h3>
               <div className="space-y-2">
                 {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">Nothing scheduled today</p>}
@@ -230,7 +230,7 @@ export default function HomePage() {
 
         {/* Todos tab */}
         {isTodosTab && (
-          <motion.div key="todos" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-5 space-y-6">
+          <motion.div key="todos" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-4 md:p-5 space-y-5 md:space-y-6">
             <TodoList />
             <ChoreBoard />
           </motion.div>
@@ -238,14 +238,14 @@ export default function HomePage() {
 
         {/* Grocery tab */}
         {isGroceryTab && (
-          <motion.div key="grocery" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-5">
+          <motion.div key="grocery" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-4 md:p-5">
             <GroceryList />
           </motion.div>
         )}
 
         {/* Photos tab */}
         {isPhotosTab && (
-          <motion.div key="photos" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-5 space-y-4">
+          <motion.div key="photos" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} className="p-4 md:p-5 space-y-4">
             <PhotoCarousel scope="family" />
             <PhotoUpload scope="family" />
           </motion.div>
@@ -262,7 +262,7 @@ export default function HomePage() {
 
       {/* FAB for calendar */}
       {isFamilyTab && (
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowEventForm(true)} className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-accent-primary text-white shadow-xl flex items-center justify-center z-40">
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowEventForm(true)} className="fixed right-5 w-14 h-14 rounded-full bg-accent-primary text-white shadow-xl flex items-center justify-center z-40" style={{ bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))' }}>
           <Plus size={28} />
         </motion.button>
       )}
@@ -288,7 +288,7 @@ function MeTab({ users, onUpdateUser }: { users: import('@/types').User[]; onUpd
 
   if (!selectedUserId) {
     return (
-      <div className="p-5 space-y-4">
+      <div className="p-4 md:p-5 space-y-4">
         <h2 className="font-display text-xl font-bold text-text-primary">Who are you?</h2>
         <div className="grid grid-cols-2 gap-3">
           {users.map((u) => (
@@ -303,7 +303,7 @@ function MeTab({ users, onUpdateUser }: { users: import('@/types').User[]; onUpd
   }
 
   return (
-    <div className="p-5 space-y-6" style={selectedUser?.accent_color ? { '--color-accent-primary': selectedUser.accent_color } as React.CSSProperties : {}}>
+    <div className="p-4 md:p-5 space-y-5 md:space-y-6" style={selectedUser?.accent_color ? { '--color-accent-primary': selectedUser.accent_color } as React.CSSProperties : {}}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <UserAvatar name={selectedUser!.name} color={selectedUser!.avatar_color} size="lg" />

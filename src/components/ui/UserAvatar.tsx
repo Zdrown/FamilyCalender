@@ -23,7 +23,7 @@ export function UserAvatar({ name, color, size = 'md', selected, onClick }: User
   const className = `
     ${sizeMap[size]}
     rounded-full flex items-center justify-center font-display font-semibold
-    text-white shadow-sm transition-all duration-200
+    text-white shadow-sm transition-all duration-200 shrink-0 aspect-square
     ${selected ? 'ring-3 ring-offset-2 ring-offset-bg-primary' : ''}
     ${onClick ? 'cursor-pointer' : ''}
   `;

@@ -85,19 +85,22 @@ export function MobileTabBar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 flex items-stretch bg-bg-card border-t border-border z-50 safe-area-pb">
+    <nav
+      className="fixed bottom-0 left-0 right-0 flex items-start bg-bg-card/95 backdrop-blur-xl border-t border-border/60 z-50"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       {tabs.map(({ id, label, icon: Icon }) => (
         <motion.button
           key={id}
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setActiveTab(id)}
           className={`
-            flex-1 flex flex-col items-center justify-center py-2 gap-0.5 min-h-[56px] transition-colors
+            flex-1 flex flex-col items-center justify-center pt-2 pb-1 gap-0.5 min-h-[50px] transition-colors
             ${activeTab === id ? 'text-accent-primary' : 'text-text-muted'}
           `}
         >
-          <Icon size={22} strokeWidth={activeTab === id ? 2.5 : 1.5} />
-          <span className="text-[10px] font-body font-medium">{label}</span>
+          <Icon size={24} strokeWidth={activeTab === id ? 2.5 : 1.5} />
+          <span className="text-[10px] font-body font-semibold">{label}</span>
         </motion.button>
       ))}
     </nav>
