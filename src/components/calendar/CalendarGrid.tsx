@@ -277,59 +277,30 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
           ))}
         </div>
 
-        {/* Desktop week view: "Today" section below grid */}
-        {viewMode === 'week' && (
-          <div className="hidden lg:block border-t-2 border-accent-primary/30 bg-accent-primary/5">
-            <div className="px-6 pt-4 pb-1">
-              <h3 className="font-display text-lg font-semibold text-accent-primary flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-accent-primary" />
-                Today &mdash; {format(new Date(), 'EEEE, MMMM d')}
-              </h3>
-            </div>
-            <div className="px-5 pb-5 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {todayEvents.length === 0 && (
-                <p className="text-text-muted font-body text-sm italic py-4 text-center col-span-full">Nothing scheduled today</p>
-              )}
-              {todayEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  users={users}
-                  onClick={() => onEventClick?.(event)}
-                  onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
-                  onEdit={onEventEdit}
-                />
-              ))}
-            </div>
+        {/* Below-calendar: Selected day events (scrollable) */}
+        <div className="border-t-2 border-accent-primary/30 bg-accent-primary/5 flex-shrink-0 overflow-y-auto max-h-[40vh]" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="px-4 md:px-6 pt-4 pb-1 sticky top-0 bg-accent-primary/5 backdrop-blur-sm z-10">
+            <h3 className="font-display text-base md:text-lg font-semibold text-accent-primary flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-accent-primary animate-pulse" />
+              {getExpandedDayLabel()}
+            </h3>
           </div>
-        )}
-
-        {/* Desktop month view: selected-day events below grid */}
-        {viewMode === 'month' && (
-          <div className="hidden lg:block border-t-2 border-accent-primary/30 bg-bg-card">
-            <div className="px-6 pt-4 pb-1">
-              <h3 className="font-display text-lg font-semibold text-text-primary flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-accent-primary" />
-                {getExpandedDayLabel()}
-              </h3>
-            </div>
-            <div className="px-5 pb-5 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {expandedDayEvents.length === 0 && (
-                <p className="text-text-muted font-body text-sm italic py-4 text-center col-span-full">No events</p>
-              )}
-              {expandedDayEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  users={users}
-                  onClick={() => onEventClick?.(event)}
-                  onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
-                  onEdit={onEventEdit}
-                />
-              ))}
-            </div>
+          <div className="px-3 md:px-5 pb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
+            {expandedDayEvents.length === 0 && (
+              <p className="text-text-muted font-body text-sm italic py-4 text-center col-span-full">No events</p>
+            )}
+            {expandedDayEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                users={users}
+                onClick={() => onEventClick?.(event)}
+                onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
+                onEdit={onEventEdit}
+              />
+            ))}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

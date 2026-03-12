@@ -36,7 +36,7 @@ export const useAppStore = create<AppState>((set) => ({
   activeTab: 'family',
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  viewMode: 'week',
+  viewMode: 'month',
   setViewMode: (mode) => set({ viewMode: mode }),
 
   selectedDate: new Date(),

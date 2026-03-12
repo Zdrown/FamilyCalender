@@ -196,15 +196,6 @@ export default function HomePage() {
               <WeatherWidget />
             </div>
             <div className="p-5 border-t border-border">
-              <h3 className="font-display text-lg font-semibold text-text-primary mb-3">
-                Today — {format(new Date(), 'EEEE, MMM d')}
-              </h3>
-              <div className="space-y-2">
-                {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">No events today</p>}
-                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} compact onDelete={() => deleteEvent.mutate(event.id)} onEdit={handleEditEvent} />)}
-              </div>
-            </div>
-            <div className="p-5 border-t border-border">
               <ChoreBoard />
             </div>
             <div className="p-5 border-t border-border">
@@ -250,13 +241,6 @@ export default function HomePage() {
           <>
             <FilterBar users={users} />
                   <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} onEventEdit={handleEditEvent} />
-            <div className="hidden md:block px-4 py-3 md:px-5 md:py-4">
-              <h3 className="font-display text-lg font-semibold text-text-primary mb-3">Today</h3>
-              <div className="space-y-2">
-                {todayEvents.length === 0 && <p className="text-text-muted font-body text-sm italic">Nothing scheduled today</p>}
-                {todayEvents.map((event) => <EventCard key={event.id} event={event} users={users} onDelete={() => deleteEvent.mutate(event.id)} onEdit={handleEditEvent} />)}
-              </div>
-            </div>
           </>
           </motion.div>
         )}

@@ -65,12 +65,12 @@ export function GroceryList() {
         </div>
         <div className="flex gap-2">
           {checked.length > 0 && (
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => clearChecked.mutate()} className="px-3 py-2 rounded-xl bg-bg-secondary text-text-muted font-body text-xs font-semibold hover:text-error transition-colors">
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => clearChecked.mutate()} className="px-3 py-2 lg:px-4 lg:py-2.5 xl:px-5 xl:py-3 rounded-xl bg-bg-secondary text-text-muted font-body text-xs lg:text-sm font-semibold hover:text-error transition-colors min-h-[44px] lg:min-h-[48px]">
               Clear done
             </motion.button>
           )}
-          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent-primary text-white font-body font-semibold text-xs">
-            <Plus size={15} /> Add
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-1.5 px-3.5 py-2 lg:px-5 lg:py-2.5 xl:px-6 xl:py-3 rounded-xl bg-accent-primary text-white font-body font-semibold text-xs lg:text-sm min-h-[44px] lg:min-h-[48px]">
+            <Plus size={15} className="lg:w-[18px] lg:h-[18px]" /> Add
           </motion.button>
         </div>
       </div>
@@ -124,24 +124,26 @@ export function GroceryList() {
         )}
       </AnimatePresence>
 
-      {/* Items by category */}
-      {grouped.map((group) => (
-        <div key={group.key}>
-          <p className="font-body text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{group.label}</p>
-          <div className="space-y-1.5">
-            {group.items.map((item) => (
-              <GroceryRow key={item.id} item={item} onToggle={toggleItem.mutate} onDelete={deleteItem.mutate} onEdit={handleEdit} />
-            ))}
+      {/* Items by category — scrollable */}
+      <div className="overflow-y-auto max-h-[50vh] lg:max-h-[40vh] space-y-4 -mx-1 px-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {grouped.map((group) => (
+          <div key={group.key}>
+            <p className="font-body text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{group.label}</p>
+            <div className="space-y-1.5">
+              {group.items.map((item) => (
+                <GroceryRow key={item.id} item={item} onToggle={toggleItem.mutate} onDelete={deleteItem.mutate} onEdit={handleEdit} />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      {items.length === 0 && (
-        <div className="text-center py-8">
-          <ShoppingCart size={40} className="mx-auto text-text-muted mb-2 opacity-30" />
-          <p className="text-text-muted font-body text-sm">List is empty</p>
-        </div>
-      )}
+        {items.length === 0 && (
+          <div className="text-center py-8">
+            <ShoppingCart size={40} className="mx-auto text-text-muted mb-2 opacity-30" />
+            <p className="text-text-muted font-body text-sm">List is empty</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -181,12 +183,12 @@ function GroceryRow({ item, onToggle, onDelete, onEdit }: { item: GroceryItem; o
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
-        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl bg-bg-card border border-border transition-opacity select-none ${item.checked ? 'opacity-40' : ''}`}
+        className={`flex items-center gap-3 px-4 py-3 md:py-2.5 lg:py-3 rounded-2xl md:rounded-xl bg-bg-card border border-border transition-opacity select-none min-h-[48px] ${item.checked ? 'opacity-40' : ''}`}
       >
         <motion.button
           whileTap={{ scale: 0.8 }}
           onClick={() => onToggle({ id: item.id, checked: !item.checked })}
-          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${item.checked ? 'bg-success border-success text-white' : 'border-border'}`}
+          className={`w-7 h-7 md:w-6 md:h-6 lg:w-7 lg:h-7 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${item.checked ? 'bg-success border-success text-white' : 'border-border'}`}
         >
           {item.checked && <Check size={14} strokeWidth={3} />}
         </motion.button>
@@ -194,8 +196,8 @@ function GroceryRow({ item, onToggle, onDelete, onEdit }: { item: GroceryItem; o
           {item.item}
           {item.quantity && <span className="text-text-muted ml-1.5">× {item.quantity}</span>}
         </span>
-        <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(item.id)} className="text-text-muted hover:text-error transition-colors">
-          <Trash2 size={14} />
+        <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(item.id)} className="text-text-muted hover:text-error transition-colors p-1.5 -m-1.5 lg:p-2 lg:-m-2">
+          <Trash2 size={14} className="lg:w-[16px] lg:h-[16px]" />
         </motion.button>
       </motion.div>
 
