@@ -124,7 +124,7 @@ export default function HomePage() {
     <AnimatePresence>
       {showSettings && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-start justify-center md:pt-8">
-          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="bg-bg-primary rounded-t-3xl md:rounded-3xl shadow-2xl w-full md:max-w-lg max-h-[90vh] md:max-h-[85vh] overflow-y-auto p-5 md:p-6" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
+          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="bg-bg-primary rounded-t-3xl md:rounded-3xl shadow-2xl w-full md:max-w-lg lg:max-w-2xl max-h-[90vh] md:max-h-[85vh] overflow-y-auto p-5 md:p-6 lg:p-8" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-2xl font-bold text-text-primary">Settings</h2>
               <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSettings(false)} className="w-10 h-10 rounded-xl bg-bg-secondary flex items-center justify-center text-text-muted"><X size={20} /></motion.button>
@@ -132,6 +132,15 @@ export default function HomePage() {
             <UserManagement />
             <NotificationSettings />
             <ScreensaverSettings />
+            <div className="mt-8 pt-4 border-t border-border">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowSettings(false)}
+                className="w-full py-3.5 lg:py-4 rounded-2xl bg-accent-primary text-white font-body font-semibold text-base lg:text-lg shadow-lg hover:shadow-xl transition-all min-h-[48px]"
+              >
+                Save & Close
+              </motion.button>
+            </div>
           </motion.div>
         </motion.div>
       )}
