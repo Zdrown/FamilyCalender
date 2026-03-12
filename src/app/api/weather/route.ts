@@ -5,22 +5,73 @@ interface WeatherData {
   forecast: { date: string; high: number; low: number; icon: string; description: string }[];
 }
 
-let cache: { data: WeatherData; timestamp: number } | null = null;
+const cache = new Map<string, { data: WeatherData; timestamp: number }>();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+// WMO Weather interpretation codes → emoji + description
+function wmoToWeather(code: number): { icon: string; description: string } {
+  if (code === 0) return { icon: '☀️', description: 'Clear' };
+  if (code <= 3) return { icon: '⛅', description: 'Partly Cloudy' };
+  if (code <= 48) return { icon: '🌫️', description: 'Foggy' };
+  if (code <= 55) return { icon: '🌧️', description: 'Drizzle' };
+  if (code <= 57) return { icon: '🌧️', description: 'Freezing Drizzle' };
+  if (code <= 65) return { icon: '🌧️', description: 'Rain' };
+  if (code <= 67) return { icon: '🌧️', description: 'Freezing Rain' };
+  if (code <= 77) return { icon: '🌨️', description: 'Snow' };
+  if (code <= 82) return { icon: '🌦️', description: 'Rain Showers' };
+  if (code <= 86) return { icon: '🌨️', description: 'Snow Showers' };
+  if (code <= 99) return { icon: '⛈️', description: 'Thunderstorm' };
+  return { icon: '🌤️', description: 'Unknown' };
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get('lat') || '40.7128';
   const lng = searchParams.get('lng') || '-74.0060';
-  const apiKey = process.env.OPENWEATHER_API_KEY;
+
+  // Round coords to 2 decimals for cache key stability
+  const cacheKey = `${parseFloat(lat).toFixed(2)},${parseFloat(lng).toFixed(2)}`;
 
   // Return cached data if fresh
-  if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
-    return NextResponse.json(cache.data);
+  const cached = cache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return NextResponse.json(cached.data);
   }
 
-  // If no API key, return mock data
-  if (!apiKey) {
+  try {
+    // Open-Meteo: free, no API key required
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=6`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Open-Meteo fetch failed');
+    const data = await res.json();
+
+    const currentWmo = wmoToWeather(data.current.weather_code);
+
+    const weather: WeatherData = {
+      current: {
+        temp: Math.round(data.current.temperature_2m),
+        description: currentWmo.description,
+        icon: currentWmo.icon,
+        humidity: data.current.relative_humidity_2m,
+        wind: Math.round(data.current.wind_speed_10m),
+      },
+      forecast: data.daily.time.slice(1, 6).map((date: string, i: number) => {
+        const wmo = wmoToWeather(data.daily.weather_code[i + 1]);
+        return {
+          date,
+          high: Math.round(data.daily.temperature_2m_max[i + 1]),
+          low: Math.round(data.daily.temperature_2m_min[i + 1]),
+          icon: wmo.icon,
+          description: wmo.description,
+        };
+      }),
+    };
+
+    cache.set(cacheKey, { data: weather, timestamp: Date.now() });
+    return NextResponse.json(weather);
+  } catch {
+    // Fallback mock if API fails
     const mock: WeatherData = {
       current: { temp: 72, description: 'Partly Cloudy', icon: '⛅', humidity: 55, wind: 8 },
       forecast: Array.from({ length: 5 }, (_, i) => {
@@ -35,54 +86,6 @@ export async function GET(request: Request) {
         };
       }),
     };
-    cache = { data: mock, timestamp: Date.now() };
     return NextResponse.json(mock);
-  }
-
-  try {
-    // Current weather
-    const currentRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=imperial&appid=${apiKey}`);
-    const currentData = await currentRes.json();
-
-    // 5-day forecast
-    const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&units=imperial&appid=${apiKey}`);
-    const forecastData = await forecastRes.json();
-
-    const iconMap: Record<string, string> = {
-      '01': '☀️', '02': '⛅', '03': '☁️', '04': '☁️',
-      '09': '🌧️', '10': '🌦️', '11': '⛈️', '13': '🌨️', '50': '🌫️',
-    };
-
-    const getIcon = (code: string) => iconMap[code.slice(0, 2)] || '🌤️';
-
-    // Group forecast by day
-    const dailyMap = new Map<string, { temps: number[]; icon: string; desc: string }>();
-    for (const item of forecastData.list || []) {
-      const date = item.dt_txt.split(' ')[0];
-      if (!dailyMap.has(date)) dailyMap.set(date, { temps: [], icon: getIcon(item.weather[0].icon), desc: item.weather[0].main });
-      dailyMap.get(date)!.temps.push(item.main.temp);
-    }
-
-    const weather: WeatherData = {
-      current: {
-        temp: Math.round(currentData.main.temp),
-        description: currentData.weather[0].main,
-        icon: getIcon(currentData.weather[0].icon),
-        humidity: currentData.main.humidity,
-        wind: Math.round(currentData.wind.speed),
-      },
-      forecast: Array.from(dailyMap.entries()).slice(0, 5).map(([date, d]) => ({
-        date,
-        high: Math.round(Math.max(...d.temps)),
-        low: Math.round(Math.min(...d.temps)),
-        icon: d.icon,
-        description: d.desc,
-      })),
-    };
-
-    cache = { data: weather, timestamp: Date.now() };
-    return NextResponse.json(weather);
-  } catch {
-    return NextResponse.json({ error: 'Failed to fetch weather' }, { status: 500 });
   }
 }

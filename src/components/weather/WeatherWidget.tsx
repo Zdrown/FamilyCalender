@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Droplets, Wind } from 'lucide-react';
 
@@ -8,11 +9,33 @@ interface WeatherData {
   forecast: { date: string; high: number; low: number; icon: string; description: string }[];
 }
 
+function useUserLocation() {
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setCoords(null),
+      { timeout: 10000, maximumAge: 600000 }
+    );
+  }, []);
+
+  return coords;
+}
+
 export function WeatherWidget({ compact }: { compact?: boolean }) {
+  const location = useUserLocation();
+
   const { data: weather } = useQuery<WeatherData>({
-    queryKey: ['weather'],
+    queryKey: ['weather', location?.lat, location?.lng],
     queryFn: async () => {
-      const res = await fetch('/api/weather');
+      const params = new URLSearchParams();
+      if (location) {
+        params.set('lat', location.lat.toFixed(4));
+        params.set('lng', location.lng.toFixed(4));
+      }
+      const res = await fetch(`/api/weather?${params.toString()}`);
       if (!res.ok) throw new Error('Weather fetch failed');
       return res.json();
     },
