@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Nunito:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-accent: 'Cormorant Garamond', 'EB Garamond', serif;
+  --font-body: 'Nunito', 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --breakpoint-wall: 2560px;
+
+  --color-bg-primary: #FEFCF8;
+  --color-bg-secondary: #F4F1EB;
+  --color-bg-card: #FFFFFF;
+  --color-accent-primary: #7CB58A;
+  --color-accent-secondary: #E8A87C;
+  --color-accent-tertiary: #C9B1D0;
+  --color-text-primary: #2D3436;
+  --color-text-secondary: #636E72;
+  --color-text-muted: #B2BEC3;
+  --color-border: #E8E4DE;
+  --color-success: #6ABF69;
+  --color-warning: #F0C75E;
+  --color-error: #E57373;
+}
+
+[data-season="summer"] {
+  --color-accent-primary: #5BA4CF;
+  --color-accent-secondary: #F4D06F;
+  --color-accent-tertiary: #FF8B6A;
+}
+
+[data-season="fall"] {
+  --color-accent-primary: #D4845A;
+  --color-accent-secondary: #8B6F4E;
+  --color-accent-tertiary: #C9A96E;
+}
+
+[data-season="winter"] {
+  --color-accent-primary: #6C8EAD;
+  --color-accent-secondary: #A3C4BC;
+  --color-accent-tertiary: #D4C5C7;
+}
+
+html {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+@media (min-width: 2560px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
