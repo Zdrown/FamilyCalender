@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 
   try {
     // Open-Meteo: free, no API key required
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=6`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=8`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error('Open-Meteo fetch failed');
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         humidity: data.current.relative_humidity_2m,
         wind: Math.round(data.current.wind_speed_10m),
       },
-      forecast: data.daily.time.slice(1, 6).map((date: string, i: number) => {
+      forecast: data.daily.time.slice(1, 8).map((date: string, i: number) => {
         const wmo = wmoToWeather(data.daily.weather_code[i + 1]);
         return {
           date,

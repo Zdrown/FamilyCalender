@@ -133,7 +133,7 @@ export default function HomePage() {
                   <AffirmationHero />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} />
+                  <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} onEventEdit={handleEditEvent} />
                 </div>
               </>
             )}
@@ -214,7 +214,7 @@ export default function HomePage() {
           <motion.div key="family" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
           <>
             <FilterBar users={users} />
-            <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} />
+                  <CalendarGrid events={events} users={users} onEventDelete={(id) => deleteEvent.mutate(id)} onEventEdit={handleEditEvent} />
             <div className="px-5 py-4">
               <h3 className="font-display text-lg font-semibold text-text-primary mb-3">Today</h3>
               <div className="space-y-2">
