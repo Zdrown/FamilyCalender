@@ -51,8 +51,11 @@ export function VirtualKeyboardProvider({ children }: { children: React.ReactNod
 
     const TEXT_TYPES = new Set(['text', 'search', 'email', 'url', 'tel', 'password', '']);
 
+    const EXCLUDED_TYPES = new Set(['date', 'datetime-local', 'time', 'month', 'week', 'color', 'range', 'file']);
+
     const handleFocusIn = (e: FocusEvent) => {
       const el = e.target as HTMLElement;
+      if (el instanceof HTMLInputElement && EXCLUDED_TYPES.has(el.type)) return;
       if (
         (el instanceof HTMLInputElement && TEXT_TYPES.has(el.type)) ||
         el instanceof HTMLTextAreaElement

@@ -124,6 +124,7 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
   const isEdit = !!editEvent;
   const [title, setTitle] = useState(editEvent?.title || '');
   const [date, setDate] = useState(editEvent?.date || format(initialDate || new Date(), 'yyyy-MM-dd'));
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const [startTime, setStartTime] = useState(editEvent?.start_time || '09:00');
   const [endTime, setEndTime] = useState(editEvent?.end_time || '10:00');
   const [allDay, setAllDay] = useState(editEvent?.all_day ?? false);
@@ -206,15 +207,23 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
           {/* Date (MM/DD/YYYY) */}
           <div className="relative">
             <input
+              ref={dateInputRef}
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10 touch-manipulation"
+              style={{ fontSize: '16px' }}
             />
-            <div className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body flex items-center justify-between pointer-events-none">
+            <button
+              type="button"
+              onClick={() => {
+                try { dateInputRef.current?.showPicker(); } catch { dateInputRef.current?.focus(); }
+              }}
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body flex items-center justify-between pointer-events-none touch-manipulation"
+            >
               <span>{date ? format(new Date(date + 'T00:00:00'), 'MM/dd/yyyy') : 'Select date'}</span>
               <Calendar size={18} className="text-text-muted" />
-            </div>
+            </button>
           </div>
 
           {/* All day toggle */}
