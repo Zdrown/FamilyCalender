@@ -124,7 +124,7 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
                 key={dayStr}
                 onClick={() => handleDayClick(day)}
                 className={`
-                  bg-bg-card p-1.5 min-h-[100px] cursor-pointer transition-colors duration-150
+                  bg-bg-card p-1.5 min-h-[100px] cursor-pointer transition-colors duration-150 touch-manipulation
                   ${today && !isSelected ? 'ring-2 ring-inset ring-accent-primary/30' : ''}
                   ${isSelected ? 'ring-2 ring-inset ring-accent-primary/60 bg-accent-primary/5' : ''}
                 `}
@@ -193,7 +193,7 @@ export function CalendarGrid({ events, users, onEventClick, onEventDelete, onEve
                     onClick={() => handleDayClick(day)}
                     className={`
                       bg-bg-card p-2 wall:p-3 min-h-[80px] lg:min-h-[100px] wall:min-h-[120px] overflow-hidden cursor-pointer
-                      transition-colors duration-150
+                      transition-colors duration-150 touch-manipulation
                       ${today && !isSelected ? 'ring-2 ring-inset ring-accent-primary/30' : ''}
                       ${isSelected ? 'ring-2 ring-inset ring-accent-primary/60 bg-accent-primary/5' : ''}
                     `}

@@ -337,15 +337,16 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-primary"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   <span className="font-body text-sm text-text-primary font-medium">Send text notification</span>
                 </div>
-                <div
+                <button
+                  type="button"
                   onClick={() => setSendSms(!sendSms)}
-                  className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${sendSms ? 'bg-accent-primary' : 'bg-border'}`}
+                  className={`relative w-12 h-7 rounded-full transition-colors cursor-pointer touch-manipulation ${sendSms ? 'bg-accent-primary' : 'bg-border'}`}
                 >
                   <motion.div
-                    animate={{ x: sendSms ? 20 : 2 }}
-                    className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{ x: sendSms ? 22 : 2 }}
+                    className="absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm"
                   />
-                </div>
+                </button>
               </label>
 
               {/* Missing phone/carrier warnings */}

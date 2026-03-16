@@ -123,12 +123,13 @@ function KeyboardPanel({
       if (!activeInput) return;
 
       if (button === '{shift}' || button === '{lock}') {
+        // Re-focus input before layout change to prevent blur
+        activeInput.focus();
         setLayoutName((prev) => (prev === 'default' ? 'shift' : 'default'));
         return;
       }
 
       if (button === '{enter}') {
-        // Submit the closest form or blur
         const form = activeInput.closest('form');
         if (form) {
           form.requestSubmit();
@@ -137,7 +138,8 @@ function KeyboardPanel({
         return;
       }
 
-      // For other special buttons, let react-simple-keyboard handle via onChange
+      // Re-focus after any key press to keep input active
+      activeInput.focus();
     },
     [activeInput, onClose],
   );
@@ -172,7 +174,9 @@ function KeyboardPanel({
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 350 }}
           className="fixed bottom-0 left-0 right-0 z-[9999]"
-          onPointerDown={(e) => e.preventDefault()} // prevent blur on input
+          onPointerDown={(e) => e.preventDefault()}
+          onTouchStart={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
         >
           {/* Dismiss bar */}
           <div className="flex justify-end px-6 py-2 bg-[#E8E4DE]/95 backdrop-blur-md border-t border-border rounded-t-2xl">

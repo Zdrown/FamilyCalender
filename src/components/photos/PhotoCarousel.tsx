@@ -1,25 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePhotos } from '@/lib/hooks/usePhotos';
 
 export function PhotoCarousel({ scope }: { scope?: string }) {
   const { data: photos = [] } = usePhotos(scope);
   const [current, setCurrent] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const photosLenRef = useRef(photos.length);
 
-  const advance = useCallback(() => {
-    if (photos.length > 1) setCurrent((c) => (c + 1) % photos.length);
-  }, [photos.length]);
+  // Keep ref in sync
+  photosLenRef.current = photos.length;
 
+  // Clamp current if photos shrink
   useEffect(() => {
-    if (current >= photos.length) setCurrent(0);
+    if (current >= photos.length && photos.length > 0) {
+      setCurrent(0);
+    }
   }, [photos.length, current]);
 
+  // Single stable interval that reads length from ref
   useEffect(() => {
-    const timer = setInterval(advance, 10000);
-    return () => clearInterval(timer);
-  }, [advance]);
+    timerRef.current = setInterval(() => {
+      if (photosLenRef.current > 1) {
+        setCurrent((c) => (c + 1) % photosLenRef.current);
+      }
+    }, 10000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []); // no deps — runs once
 
   if (photos.length === 0) {
     return (
@@ -29,13 +40,15 @@ export function PhotoCarousel({ scope }: { scope?: string }) {
     );
   }
 
+  const photo = photos[current] ?? photos[0];
+
   return (
     <div className="relative h-48 rounded-2xl overflow-hidden bg-black">
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         <motion.img
-          key={photos[current]?.id}
-          src={photos[current]?.url}
-          alt={photos[current]?.caption || 'Family photo'}
+          key={photo?.id}
+          src={photo?.url}
+          alt={photo?.caption || 'Family photo'}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -43,9 +56,9 @@ export function PhotoCarousel({ scope }: { scope?: string }) {
           className="absolute inset-0 w-full h-full object-cover"
         />
       </AnimatePresence>
-      {photos[current]?.caption && (
+      {photo?.caption && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">
-          <p className="font-body text-xs text-white/90">{photos[current].caption}</p>
+          <p className="font-body text-xs text-white/90">{photo.caption}</p>
         </div>
       )}
       {/* Dots */}
