@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronUp, ChevronDown, Users, Calendar } from 'lucide-react';
 import type { CalendarEvent, User } from '@/types';
 import { format } from 'date-fns';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 interface EventFormData {
   title: string;
@@ -137,6 +138,7 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
   const [sendSms, setSendSms] = useState(false);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const formatDisplay = (time: string) => {
     if (!time) return 'Set time';
@@ -204,26 +206,50 @@ export function EventForm({ users, onSubmit, onClose, initialDate, editEvent }: 
             autoFocus
           />
 
-          {/* Date (MM/DD/YYYY) */}
+          {/* Date – native picker on mobile, custom on md+ */}
           <div className="relative">
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10 touch-manipulation"
-              style={{ fontSize: '16px' }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                try { dateInputRef.current?.showPicker(); } catch { dateInputRef.current?.focus(); }
-              }}
-              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body flex items-center justify-between pointer-events-none touch-manipulation"
-            >
-              <span>{date ? format(new Date(date + 'T00:00:00'), 'MM/dd/yyyy') : 'Select date'}</span>
-              <Calendar size={18} className="text-text-muted" />
-            </button>
+            {/* Mobile: native date input */}
+            <div className="md:hidden">
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10 touch-manipulation"
+                style={{ fontSize: '16px' }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  try { dateInputRef.current?.showPicker(); } catch { dateInputRef.current?.focus(); }
+                }}
+                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body flex items-center justify-between pointer-events-none touch-manipulation"
+              >
+                <span>{date ? format(new Date(date + 'T00:00:00'), 'MM/dd/yyyy') : 'Select date'}</span>
+                <Calendar size={18} className="text-text-muted" />
+              </button>
+            </div>
+
+            {/* Desktop: custom date picker */}
+            <div className="hidden md:block relative">
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-text-primary font-body flex items-center justify-between hover:border-accent-primary/40 transition-colors"
+              >
+                <span>{date ? format(new Date(date + 'T00:00:00'), 'EEEE, MMMM d, yyyy') : 'Select date'}</span>
+                <Calendar size={18} className="text-text-muted" />
+              </button>
+              <AnimatePresence>
+                {showDatePicker && (
+                  <DatePicker
+                    value={date}
+                    onChange={(v) => setDate(v)}
+                    onClose={() => setShowDatePicker(false)}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* All day toggle */}
