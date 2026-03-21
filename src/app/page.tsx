@@ -27,6 +27,7 @@ import { PhotoUpload } from '@/components/photos/PhotoUpload';
 import { UserManagement } from '@/components/settings/UserManagement';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { ScreensaverSettings } from '@/components/settings/ScreensaverSettings';
+import { WeatherSettings } from '@/components/settings/WeatherSettings';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Screensaver } from '@/components/ui/Screensaver';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
@@ -132,6 +133,7 @@ export default function HomePage() {
             <UserManagement />
             <NotificationSettings />
             <ScreensaverSettings />
+            <WeatherSettings />
             <div className="mt-8 pt-4 border-t border-border">
               <motion.button
                 whileTap={{ scale: 0.97 }}

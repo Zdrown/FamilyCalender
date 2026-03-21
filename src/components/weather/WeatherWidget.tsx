@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Droplets, Wind, Sun, Cloud, CloudSun, CloudRain,
   CloudDrizzle, CloudSnow, CloudLightning, CloudFog,
-  CloudRainWind, Snowflake, MapPin,
+  CloudRainWind, Snowflake,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -102,16 +102,7 @@ function useUserLocation() {
 const WEATHER_GRADIENT = 'from-sky-500 via-blue-500 to-indigo-500';
 
 export function WeatherWidget({ compact }: { compact?: boolean }) {
-  const { coords, tried, usingDefault, requestLocation } = useUserLocation();
-  const queryClient = useQueryClient();
-
-  const handleRequestLocation = useCallback(() => {
-    requestLocation();
-    // Invalidate weather query after a short delay to refetch with new coords
-    setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: ['weather'] });
-    }, 2000);
-  }, [requestLocation, queryClient]);
+  const { coords, tried } = useUserLocation();
 
   const { data: weather, isLoading } = useQuery<WeatherData>({
     queryKey: ['weather', coords?.lat ?? 'default', coords?.lng ?? 'default'],
@@ -180,17 +171,6 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
           </div>
         </div>
       </div>
-
-      {/* Location banner */}
-      {usingDefault && (
-        <button
-          onClick={handleRequestLocation}
-          className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-amber-700 dark:text-amber-400 text-xs font-body font-medium"
-        >
-          <MapPin size={14} />
-          Using Wakefield, MA default — tap to share your location
-        </button>
-      )}
 
       {/* 5-day forecast */}
       <div className="bg-bg-card p-4">
