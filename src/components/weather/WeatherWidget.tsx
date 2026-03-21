@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Droplets, Wind, Sun, Cloud, CloudSun, CloudRain,
   CloudDrizzle, CloudSnow, CloudLightning, CloudFog,
-  CloudRainWind, Snowflake,
+  CloudRainWind, Snowflake, MapPin,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -46,26 +46,72 @@ function WeatherIcon({ icon, size, className }: { icon: string; size: number; cl
   return <Icon size={size} color={color} className={className} />;
 }
 
+const LOCATION_STORAGE_KEY = 'weather-user-location';
+
 function useUserLocation() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [tried, setTried] = useState(false);
+  const [usingDefault, setUsingDefault] = useState(false);
 
-  useEffect(() => {
-    if (!navigator.geolocation) { setTried(true); return; }
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setTried(true); },
-      () => setTried(true),
-      { timeout: 5000, maximumAge: 600000 }
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCoords(loc);
+        setUsingDefault(false);
+        try { localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(loc)); } catch {}
+      },
+      () => {},
+      { timeout: 10000, maximumAge: 600000 }
     );
   }, []);
 
-  return { coords, tried };
+  useEffect(() => {
+    // Check localStorage first
+    try {
+      const saved = localStorage.getItem(LOCATION_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.lat && parsed.lng) {
+          setCoords(parsed);
+          setTried(true);
+          // Still try to refresh in background
+          requestLocation();
+          return;
+        }
+      }
+    } catch {}
+
+    if (!navigator.geolocation) { setTried(true); setUsingDefault(true); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCoords(loc);
+        try { localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(loc)); } catch {}
+        setTried(true);
+      },
+      () => { setTried(true); setUsingDefault(true); },
+      { timeout: 10000, maximumAge: 600000 }
+    );
+  }, [requestLocation]);
+
+  return { coords, tried, usingDefault, requestLocation };
 }
 
 const WEATHER_GRADIENT = 'from-sky-500 via-blue-500 to-indigo-500';
 
 export function WeatherWidget({ compact }: { compact?: boolean }) {
-  const { coords, tried } = useUserLocation();
+  const { coords, tried, usingDefault, requestLocation } = useUserLocation();
+  const queryClient = useQueryClient();
+
+  const handleRequestLocation = useCallback(() => {
+    requestLocation();
+    // Invalidate weather query after a short delay to refetch with new coords
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['weather'] });
+    }, 2000);
+  }, [requestLocation, queryClient]);
 
   const { data: weather, isLoading } = useQuery<WeatherData>({
     queryKey: ['weather', coords?.lat ?? 'default', coords?.lng ?? 'default'],
@@ -134,6 +180,17 @@ export function WeatherWidget({ compact }: { compact?: boolean }) {
           </div>
         </div>
       </div>
+
+      {/* Location banner */}
+      {usingDefault && (
+        <button
+          onClick={handleRequestLocation}
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-amber-700 dark:text-amber-400 text-xs font-body font-medium"
+        >
+          <MapPin size={14} />
+          Using Wakefield, MA default — tap to share your location
+        </button>
+      )}
 
       {/* 5-day forecast */}
       <div className="bg-bg-card p-4">

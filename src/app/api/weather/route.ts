@@ -26,8 +26,9 @@ function wmoToWeather(code: number): { icon: string; description: string } {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const lat = searchParams.get('lat') || '40.7128';
-  const lng = searchParams.get('lng') || '-74.0060';
+  // Default: Wakefield, MA (suburb of Boston)
+  const lat = searchParams.get('lat') || '42.5039';
+  const lng = searchParams.get('lng') || '-71.0723';
 
   // Round coords to 2 decimals for cache key stability
   const cacheKey = `${parseFloat(lat).toFixed(2)},${parseFloat(lng).toFixed(2)}`;
