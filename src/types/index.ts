@@ -111,11 +111,22 @@ export interface GroceryItem {
   id: string;
   family_id: string;
   item: string;
+  description: string | null;
   quantity: string | null;
   category: 'produce' | 'dairy' | 'meat' | 'pantry' | 'frozen' | 'other';
+  list_type: 'weekly' | 'biweekly';
   checked: boolean;
   added_by: string | null;
   created_at: string;
+}
+
+export interface GrocerySettings {
+  id: string;
+  family_id: string;
+  list_type: 'weekly' | 'biweekly';
+  max_budget: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Affirmation {
